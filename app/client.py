@@ -20,10 +20,11 @@ class GraphClient:
 
     def _initialize(self, user_id):
         self.token_url = f"https://login.microsoftonline.com/{Config.TENANT_ID}/oauth2/v2.0/token"
-        self.contacts_url = "https://graph.microsoft.com/v1.0/me/contacts"
+        self.contacts_url = "https://graph.microsoft.com/v1.0/me/contacts" # get contacts from any user within the tenant
         self.client_id = Config.CLIENT_ID
         self.client_secret = Config.CLIENT_SECRET
-        self.scope = "User.Read Contacts.ReadWrite"
+        #self.scope = "User.Read Contacts.ReadWrite"
+        self.scope = "https://graph.microsoft.com/.default" # for multi tenant use
         self.redirect_uri = Config.REDIRECT_URI
         self.user_id = user_id
         self.access_token = None
@@ -82,3 +83,4 @@ class GraphClient:
         self.access_token = None
         self.headers = None
         self.user_id = None
+        # session from oauth2 is still valid!

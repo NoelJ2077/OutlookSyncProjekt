@@ -23,36 +23,37 @@
             <h3>Contacts</h3>
             <div id="contact-list">
                 {% if contacts %}
-                    <table class="table table-striped">
-                        <thead>
-                            <tr>
-                                <th>Name</th>
-                                <th>Email</th>
-                                <th>Phone</th>
-                            </tr>
-                        </thead>
-                        <tbody>
+                    <div id="contact-list" class="contact-list">
+                        {% if contacts %}
                             {% for contact in contacts %}
-                                <tr>
-                                    <td>{{ contact.get('displayName', 'N/A') }}</td>
-                                    <td>
-                                        {% if contact.get('emailAddresses') %}
-                                            {{ contact['emailAddresses'][0].get('address', 'N/A') }}
-                                        {% else %}
-                                            N/A
-                                        {% endif %}
-                                    </td>
-                                    <td>
-                                        {% if contact.get('businessPhones') %}
-                                            {{ contact['businessPhones'][0] or 'N/A' }}
-                                        {% else %}
-                                            N/A
-                                        {% endif %}
-                                    </td>
-                                </tr>
+                                <div class="contact-card">
+                                    <img src="{{ contact.get('photoUrl', '/static/default-avatar.png') }}" alt="Profile Picture" class="contact-avatar">
+                                    <div class="contact-info">
+                                        <div class="contact-field"><strong>Name:</strong> {{ contact.get('displayName', 'N/A') }}</div>
+                                        <div class="contact-field"><strong>Email:</strong> 
+                                            {% if contact.get('emailAddresses') %}
+                                                {{ contact['emailAddresses'][0].get('address', 'N/A') }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="contact-field"><strong>Phone:</strong> 
+                                            {% if contact.get('businessPhones') %}
+                                                {{ contact['businessPhones'][0] or 'N/A' }}
+                                            {% else %}
+                                                N/A
+                                            {% endif %}
+                                        </div>
+                                        <div class="contact-field"><strong>Company:</strong> {{ contact.get('companyName', 'N/A') }}</div>
+                                        <div class="contact-field"><strong>Job Title:</strong> {{ contact.get('jobTitle', 'N/A') }}</div>
+                                        <div class="contact-field"><strong>Website:</strong> {{ contact.get('businessHomePage', 'N/A') }}</div>
+                                    </div>
+                                </div>
                             {% endfor %}
-                        </tbody>
-                    </table>
+                        {% else %}
+                            <div class="no-contacts">No contacts found.</div>
+                        {% endif %}
+                    </div>
                 {% else %}
                     <p>No contacts found.</p>
                 {% endif %}
