@@ -1,0 +1,241 @@
+/* Reset default styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Roboto', sans-serif;
+    line-height: 1.6;
+    background-color: #242424;
+    color: #e0e0e0;
+}
+
+/* Header/Navbar */
+#mainheader {
+    background-color: #203142;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.header-elements a{
+    color: #ffffff;
+    font-size: 1.5rem;
+    text-decoration: underline;
+    font-weight: 700;
+}
+.app_mode {
+    font-weight: bold;
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.app_mode.connected_to_local_database {
+    color: green;
+}
+
+.app_mode.connected_to_microsoft_exchange {
+    color: #64b5f6;
+}
+
+.app_mode.not_logged_in {
+    color: red;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+
+}
+
+.footer-link {
+    color: #e0e0e0;
+    text-decoration: underline;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+.footer-link:hover {
+    color: #64b5f6;
+}
+.nav-links {
+    list-style: none;
+    display: flex;
+    gap: 2rem;
+    margin-left: auto;
+}
+
+.nav-link {
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 1.1rem;
+    transition: color 0.3s ease;
+}
+
+.nav-link:hover {
+    color: #64b5f6;
+}
+
+/* Main Content */
+#maincontent {
+    max-width: 1200px;
+    margin: 2rem auto;
+    padding: 0 1rem;
+    min-height: calc(100vh - 200px);
+}
+
+/* Footer */
+#mainfooter {
+    background-color: #203142;
+    color: #e0e0e0;
+    text-align: center;
+    padding: 1rem;
+    position: relative;
+    bottom: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+}
+#iconico {
+    border-radius: 5px;
+    display: inline-block;
+    transition: transform 0.3s ease-in-out;
+    transform-origin: bottom;
+}
+
+#iconico:hover {
+    transform: scale(4);
+    opacity: 0.3;
+    transition: opacity 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.form-container {
+    max-width: 400px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #2d352a;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+}
+
+.form-container h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: #ffffff;
+}
+
+.form-group label {
+    color: #b0b0b0;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #444;
+    background: #222;
+    color: #e0e0e0;
+    border-radius: 4px;
+    font-size: 1rem;
+    transition: border-color 0.3s ease;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #64b5f6;
+}
+
+button {
+    width: 100%;
+    background-color: #64b5f6;
+    color: #121212;
+    padding: 0.75rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #42a5f5;
+}
+
+/* Flash Messages */
+.flash.success {
+
+    background-color: #2ecc71;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin: 1rem 0;
+}
+
+.flash.error {
+    background-color: #e74c3c;
+    color: #ffffff;
+    border-radius: 4px;
+    padding: 0.5rem;
+    margin: 1rem 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .hamburger {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background-color: #1f1f1f;
+        padding: 1rem;
+    }
+
+    .nav-links.active {
+        display: flex;
+    }
+}
+.index-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    padding: 2rem;
+    background-color: #2c3e50;
+    color: #ecf0f1;
+    text-align: center;
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Headings */
+.index-container h1, 
+.index-container h2, 
+.index-container h3 {
+    margin-bottom: 1rem;
+    color: #64b5f6;
+}
+
+/* Paragraphs */
+.index-container p {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+}
+
+/* Links */
+.index-container a {
+    color: #f39c12;
+    font-weight: bold;
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+
+.index-container a:hover {
+    color: #e67e22;
+}

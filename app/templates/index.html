@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}Index Page{% endblock %}
+
+{% block content %}
+<div class="index-container">
+    <!-- This page will not be in use when logged in, it is only a small overview of the project! -->
+    <h1>Welcome to the Index Page</h1>
+    <p>This is the index page content.</p>
+    <h2>Welcome: {{ username }} </h2>
+    <h2>Email: {{ email }} </h2>
+    {% if username != 'Guest' %}
+        <h3>If you see your email / username, it means you are already logged in locally!</h3>
+    {% endif %}
+    <h3>This app can be used without logging into your Tenant, but you won't be able to actually import / export the contacts to outlook.</h3>
+
+    <!-- When this page is clicked, the above content will not be displayed -->
+    <p>Login here: <a href="{{ url_for('user.login') }}">Login</a></p>
+    <p>Register here: <a href="{{ url_for('user.register') }}">Register</a></p>
+    <p>Logout here: <a href="{{ url_for('user.logout') }}">Logout</a></p>
+
+    <!-- flas msg -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="flash {{ category }}">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+    {% endwith %}
+</div>
+{% endblock %}

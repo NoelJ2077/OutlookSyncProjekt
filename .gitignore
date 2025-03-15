@@ -1,0 +1,9 @@
+# ignore ignore folder
+app/ignore/
+# ignore python cache
+__pycache__/
+app/__pycache__/
+# ignore python env
+venv/
+# ignore python env
+.env
