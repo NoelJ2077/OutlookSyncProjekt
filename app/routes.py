@@ -5,12 +5,10 @@ from app.core import check_register, check_login, get_username, AppMode
 from functools import wraps
 import logging
 
-# Blueprints erstellen
 main = Blueprint('main', __name__)
 user = Blueprint('user', __name__)
 logger = logging.getLogger(__name__)
 
-# Login-Required Decorator
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
@@ -20,9 +18,8 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
-# Hilfsfunktion zum Berechnen des App-Modes
 def get_current_app_mode():
-    """Berechnet den aktuellen App-Mode basierend auf der Session."""
+    """Get current API Status."""
 
     if 'access_token' in session:
         return AppMode.msgraph
@@ -34,7 +31,7 @@ def get_current_app_mode():
 # --- Main Routes ---
 @main.route("/", methods=["GET"])
 def index():
-    """Index-Seite."""
+    """Index Page. If logged in, redirect to profile."""
     username = session.get('username', 'Guest')
     email = session.get('email', 'Guest')
     app_mode = get_current_app_mode()  
@@ -44,13 +41,13 @@ def index():
 
 @main.route('/home', methods=['GET'])
 def home():
-    """Weiterleitung zur Index-Seite."""
+    """ Redirect to index."""
     return redirect(url_for('main.index'))
 
 @main.route('/profile', methods=['GET'])
 @login_required
 def profile():
-    """Dashboard-Seite, lädt Kontakte aus der Graph API."""
+    """Profile Page. If not logged in, redirect to login."""
     client = GraphClient(session.get('email'))
     if not session.get('access_token'):
         logger.warning("No access token found, redirecting to login")
@@ -97,7 +94,7 @@ def login():
 
 @user.route('/register', methods=['GET', 'POST'])
 def register():
-    """Register new user locally."""
+    """Register new user locally"""
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
@@ -135,7 +132,7 @@ def logout():
 # --- unknown routes return to index ---
 @main.route('/<path:path>', methods=['GET'])
 def unknown_route(path):
-    """Unbekannte Route -> Index."""
+    """ All unknown routes redirect to index."""
     flash(f"Unknown route '{path}', redirecting to index", "warning")
     app_mode = get_current_app_mode()  
     return redirect(url_for('main.index', app_mode=app_mode))
@@ -143,7 +140,7 @@ def unknown_route(path):
 # get here from /login -> redirect
 @user.route('/callback', methods=['GET'])
 def callback():
-    """Callback-Route nach erfolgreichem Microsoft-Login."""
+    """Callback from Microsoft login. Get access token."""
     authorization_code = request.args.get('code')
     if authorization_code and 'email' in session:
         logger.info(f"Authorization code received, getting access token.")

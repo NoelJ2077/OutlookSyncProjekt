@@ -5,21 +5,20 @@ from app.config import Config
 logger = logging.getLogger(__name__)
 
 class GraphClient:
-    """Interaktion mit der Microsoft Graph API"""
+    """Client to interact with the Microsoft Graph API."""
 
     _instance = None
 
     def __new__(cls, user_id=None):
-        """Singleton-Implementierung, um nur eine Instanz zu erstellen."""
+        """ Singleton to ensure only one instance of the class is created. """
         if cls._instance is None:
             cls._instance = super(GraphClient, cls).__new__(cls)
             cls._instance._initialize(user_id)
         elif user_id and cls._instance.user_id != user_id:
-            cls._instance.user_id = user_id # Benutzerwechsel
+            cls._instance.user_id = user_id # update user_id if different
         return cls._instance
 
     def _initialize(self, user_id):
-        """Initialisierung der Instanz."""
         self.token_url = f"https://login.microsoftonline.com/{Config.TENANT_ID}/oauth2/v2.0/token"
         self.contacts_url = "https://graph.microsoft.com/v1.0/me/contacts"
         self.client_id = Config.CLIENT_ID
@@ -31,7 +30,7 @@ class GraphClient:
         self.headers = None
 
     def get_access_token(self, authorization_code=None):
-        """Holt das Access Token über den Authorization Code Flow oder Client Credentials."""
+        """ Get access token if authorization code is provided (OAuth 2.0 Flow), else use client credentials flow first."""
         payload = {
             "client_id": self.client_id,
             "client_secret": self.client_secret,
@@ -62,14 +61,14 @@ class GraphClient:
         return self.access_token
 
     def get_auth_redirect_url(self):
-        """Generiert die Authentifizierungs-URL für den OAuth 2.0 Flow."""
+        """ Get the URL to redirect the user to the Microsoft login page."""
         return (
             f"https://login.microsoftonline.com/{Config.TENANT_ID}/oauth2/v2.0/authorize?"
             f"response_type=code&client_id={self.client_id}&redirect_uri={self.redirect_uri}&scope={self.scope}"
         )
 
     def get_contacts(self):
-        """Holt alle Kontakte des Benutzers über die Graph API."""
+        """ Get contacts Outlook contacts from user_id."""
         if not self.access_token:
             return False
         response = requests.get(self.contacts_url, headers=self.headers)
@@ -78,7 +77,7 @@ class GraphClient:
         return response.json().get("value", [])
 
     def reset(self):
-        """Setzt den Client zurück (z. B. bei Logout)."""
+        """ Reset the client, e.g. after logout."""
         logger.info("Resetting GraphClient.")
         self.access_token = None
         self.headers = None

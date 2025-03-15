@@ -8,7 +8,7 @@ from flask import session
 logger = logging.getLogger(__name__)
 
 def check_login(email, password):
-    """ Prüft, ob die E-Mail existiert und das Passwort korrekt ist. """
+    """ Check if the email exists in the database and if the password is correct. """
     try:
         if not check_domain(email):
             splitdomain = email.split("@")
@@ -21,7 +21,7 @@ def check_login(email, password):
         user = c.fetchone()
         conn.close()
 
-        if user and verify_password(password, user[0]):  # user[0] = gespeichertes Passwort
+        if user and verify_password(password, user[0]):
             logger.debug(f"Local login successful for: {email}")
             return True
         
