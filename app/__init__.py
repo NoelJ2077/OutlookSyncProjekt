@@ -1,21 +1,21 @@
 from flask import Flask
-from .config import Config, DB_Config
+from .config import Config, DB_Tables
 import logging
-import os
 
 logger = logging.getLogger(__name__)
 logger_initialized = False
 
 def create_app():
+    """ Create Flask App including Database and Logger. """
     global logger_initialized
 
     app = Flask(__name__)
     app.config.from_object(Config)  # get Graph values
     app.secret_key = Config.SECRET_KEY  # Flask Session Key
     log_path = Config.LOG_PATH  # Log file path
-    DB_Config.create_tables() # Create DB with tables
-    
-    timeformat = '%H:%M:%S %d.%m.%Y'
+    DB_Tables.create_tables() # Create DB with tables
+
+    timeformat = '%H:%M:%S %d.%m.%Y' # 15:45:10 20.03.2025
 
     if not logger_initialized:
         logger.setLevel(logging.DEBUG)

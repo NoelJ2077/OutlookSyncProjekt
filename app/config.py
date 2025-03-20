@@ -13,14 +13,14 @@ class Config:
     REDIRECT_URI = os.getenv("REDIRECT_URI")
     LOG_PATH = os.path.join(os.path.dirname(__file__), 'ignore', 'app.log')
 
-class DB_Config:
+class DB_Tables:
     """ Database configuration & tables """
     DB_NAME = "contacts.db"
     DB_PATH = os.path.join(os.path.dirname(__file__), 'ignore', DB_NAME) # dir ignore/contacts.db
 
     @staticmethod
     def create_tables():
-        conn = sqlite3.connect(DB_Config.DB_PATH)
+        conn = sqlite3.connect(DB_Tables.DB_PATH)
         c = conn.cursor()
         
         # TB user
@@ -95,4 +95,26 @@ class DB_Config:
         
         conn.commit() # save
         conn.close() # close connection
-    
+
+class TestUser:
+    """ Test User for local database """
+    name = os.getenv("test_user_a")
+    email = os.getenv("test_email_a")
+    password = os.getenv("test_password_a")
+    role = os.getenv("test_role_a")
+
+    def create_user(hashed_pw):
+        """ Create a user by default (needs hashed pw!) """
+        conn = sqlite3.connect(DB_Tables.DB_PATH)
+        c = conn.cursor()
+        c.execute("SELECT email FROM users WHERE email = ?", (TestUser.email,))
+        user = c.fetchone()
+        if not user:
+            c.execute("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", (TestUser.name, TestUser.email, hashed_pw, TestUser.role))
+            conn.commit()
+            conn.close()
+            return True
+        else:
+            conn.close()
+            return False
+        

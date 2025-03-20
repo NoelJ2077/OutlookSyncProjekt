@@ -34,10 +34,12 @@ def index():
     """Index Page. If logged in, redirect to profile."""
     username = session.get('username', 'Guest')
     email = session.get('email', 'Guest')
-    app_mode = get_current_app_mode()  
+    db_role = session.get('db_role', 'Error')
+    app_mode = get_current_app_mode()
+    
     logger.debug(f"Rendering index with app_mode: {app_mode}")
     
-    return render_template("index.html", username=username, email=email, app_mode=app_mode)
+    return render_template("index.html", username=username, email=email, app_mode=app_mode, user_role=db_role)
 
 @main.route('/home', methods=['GET'])
 def home():
@@ -77,7 +79,7 @@ def login():
 
         if check_login(email, password):
             session['email'] = email
-            session['username'] = get_username(email)
+            session['username'], session['db_role'] = get_username(email)
             client = GraphClient(email)
             logger.info(f"Local login for '{email}' Ok, redirecting to {client.get_auth_redirect_url()}")
             redirect_url = client.get_auth_redirect_url()
@@ -106,7 +108,7 @@ def register():
             return redirect(url_for('main.index'))
         else:
             logger.warning(f"User '{email}' could not be registered, redirecting to register")
-            flash("Registration failed, email already exists", "danger")
+            flash("Registration failed, domain not allowed or user already exists", "danger")
             return redirect(url_for('user.register'))
 
     app_mode = get_current_app_mode()  

@@ -1,7 +1,7 @@
 # login process, check db stuff etc.
 # If login yes but not in Tenant, error / 403
 import sqlite3, bcrypt, logging
-from app.config import DB_Config
+from app.config import DB_Tables
 from app.ignore.hashing import check_domain, hash_password, verify_password
 from flask import session
 
@@ -15,7 +15,7 @@ def check_login(email, password):
             logger.debug(f"This domain is not allowed: '{splitdomain[1]}'")
             return False
 
-        conn = sqlite3.connect(DB_Config.DB_PATH)
+        conn = sqlite3.connect(DB_Tables.DB_PATH)
         c = conn.cursor()
         c.execute("SELECT password FROM users WHERE email = ?", (email,))
         user = c.fetchone()
@@ -40,7 +40,7 @@ def check_register(username, email, password):
             logger.debug(f"Domain: {splitdomain[1]} not allowed")
             return False
         
-        conn = sqlite3.connect(DB_Config.DB_PATH)
+        conn = sqlite3.connect(DB_Tables.DB_PATH)
         c = conn.cursor()
 
         # check if email exists
@@ -63,17 +63,20 @@ def check_register(username, email, password):
         return False
 
 def get_username(email):
-    """ Set username via email from database. """
+    """ Set username and role via email from database. """
     try:
-        conn = sqlite3.connect(DB_Config.DB_PATH)
+        conn = sqlite3.connect(DB_Tables.DB_PATH)
         c = conn.cursor()
-        c.execute("SELECT username FROM users WHERE email = ?", (email,))
-        username = c.fetchone()[0]
+        c.execute("SELECT username, role FROM users WHERE email = ?", (email,))
+        user = c.fetchone()
         conn.close()
-        return username
+        if user:
+            return user[0], user[1] # username, role
+        else:
+            return None, None
     except sqlite3.DatabaseError as e:
         logger.error(f"Error: {e}")
-        return False
+        return None, None
 
 class AppMode:
     """ App modes for header. (local database, ms-exchange, logged out)"""
