@@ -34,7 +34,7 @@ def index():
     """Index Page. If logged in, redirect to profile."""
     username = session.get('username', 'Guest')
     email = session.get('email', 'Guest')
-    db_role = session.get('db_role', 'Error')
+    db_role = session.get('db_role', 'Guest')
     app_mode = get_current_app_mode()
     
     logger.debug(f"Rendering index with app_mode: {app_mode}")
@@ -43,8 +43,11 @@ def index():
 
 @main.route('/home', methods=['GET'])
 def home():
+    app_mode = get_current_app_mode()
+    user_role = session.get('db_role', 'Guest')
+
     """ Redirect to index."""
-    return redirect(url_for('main.index'))
+    return redirect(url_for('main.index', app_mode=app_mode, user_role=user_role))
 
 @main.route('/profile', methods=['GET'])
 @login_required
@@ -56,8 +59,8 @@ def profile():
         return redirect(url_for('user.login'))
     try:
         contacts = client.get_contacts() # if false, empty app_mode
-         
         app_mode = get_current_app_mode()
+        user_role = session.get('db_role', 'Guest')
     except Exception as e:
         logger.error(f"Error: {e}") 
         return redirect(url_for('main.index'))
@@ -66,7 +69,8 @@ def profile():
         username=session.get('username'),
         email=session.get('email'),
         contacts=contacts,
-        app_mode=app_mode
+        app_mode=app_mode,
+        user_role=user_role
     ) 
 
 # --- User Routes ---

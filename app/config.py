@@ -96,7 +96,7 @@ class DB_Tables:
         conn.commit() # save
         conn.close() # close connection
 
-class TestUser:
+class Tests:
     """ Test User for local database """
     name = os.getenv("test_user_a")
     email = os.getenv("test_email_a")
@@ -107,10 +107,10 @@ class TestUser:
         """ Create a user by default (needs hashed pw!) """
         conn = sqlite3.connect(DB_Tables.DB_PATH)
         c = conn.cursor()
-        c.execute("SELECT email FROM users WHERE email = ?", (TestUser.email,))
+        c.execute("SELECT email FROM users WHERE email = ?", (Tests.email,))
         user = c.fetchone()
         if not user:
-            c.execute("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", (TestUser.name, TestUser.email, hashed_pw, TestUser.role))
+            c.execute("INSERT INTO users (username, email, password, role) VALUES (?, ?, ?, ?)", (Tests.name, Tests.email, hashed_pw, Tests.role))
             conn.commit()
             conn.close()
             return True
@@ -118,3 +118,4 @@ class TestUser:
             conn.close()
             return False
         
+

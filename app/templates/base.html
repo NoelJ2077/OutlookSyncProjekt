@@ -31,7 +31,7 @@
                     <li><a class="nav-link" href="{{ url_for('user.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
                     <li><a class="nav-link" href="{{ url_for('user.register') }}"><i class="fas fa-user-plus"></i> Register</a></li>
                     <li><a class="nav-link" href="{{ url_for('user.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                    <li><span class="nav-link user_role" data-role="{{ user_role }}">Role "{{ user_role }}"</span></li>
+                    <li><span class="nav-link user_role">{{ user_role }}</span></li>
                 </ul>
                 <!-- Hamburger menu for mobile (optional) -->
                 <div class="hamburger">
