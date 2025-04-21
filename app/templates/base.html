@@ -5,6 +5,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}Dashboard{% endblock %}</title>
         <link rel="stylesheet" href="{{ url_for('static', filename='main.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='dashboard.css') }}">
         <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
         
         <!-- Google Fonts (optional, for better typography) -->
@@ -22,12 +23,12 @@
         <header id="mainheader">
             <nav class="navbar">
                 <div class="header-elements">
-                    <a href="{{ url_for('main.home') }}">Refresh Page</a>
+                    <a href="{{ url_for('main.refresh_page') }}">Refresh Page</a>
                     <!-- Variable app mode: is either local or ms-exchange -->
                     <p>API-Status: <span class="app_mode {{ app_mode|lower|replace(' ', '_') }}">{{ app_mode }}</span></p>
                 </div>
                 <ul class="nav-links">
-                    <li><a class="nav-link" href="{{ url_for('main.profile') }}"><i class="fas fa-home"></i> Dashboard</a></li>
+                    <li><a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
                     <li><a class="nav-link" href="{{ url_for('user.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
                     <li><a class="nav-link" href="{{ url_for('user.register') }}"><i class="fas fa-user-plus"></i> Register</a></li>
                     <li><a class="nav-link" href="{{ url_for('user.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
@@ -46,7 +47,8 @@
             <p>&copy; 2025, Noël Jörg</p>
             <p>Contact editor for Outlook</p>
             <img id="iconico" src="{{ url_for('static', filename='favicon.png') }}" alt="Favicon" style="width:40px; height:40px; vertical-align:middle;">
-            <p><a class="footer-link" href="https://github.com/NoelJ2077/OutlookSyncProjekt">Source Code</a> 
+            <p><a class="footer-link" href="https://github.com/NoelJ2077/OutlookSyncProjekt">Source Code</a>
+            <p>noelj.testuser@octosoft.ch</p>
         </footer>
     </body>
 </html>

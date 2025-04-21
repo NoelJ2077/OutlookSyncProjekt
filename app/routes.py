@@ -1,163 +1,161 @@
 #app/routes.py
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash
-from app.client import GraphClient
-from app.core import check_register, check_login, get_username, AppMode
-from functools import wraps
+from app.helpermethods import * # check_login, get_username, get_current_app_mode
+from app import client
 import logging
+from functools import wraps
+from flask import Blueprint, render_template, redirect, url_for, request, session, flash
 
 main = Blueprint('main', __name__)
 user = Blueprint('user', __name__)
+
 logger = logging.getLogger(__name__)
 
 def login_required(f):
+    """ Decorator to check if user is logged in via session """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'email' not in session or 'username' not in session:
-            logger.warning("User not logged in, redirecting to login")
+        if session.get('user_id') is None:
+            flash('Login required', 'danger')
             return redirect(url_for('user.login'))
         return f(*args, **kwargs)
     return decorated_function
 
-def get_current_app_mode():
-    """Get current API Status."""
-
-    if 'access_token' in session:
-        return AppMode.msgraph
-    elif 'username' in session:
-        return AppMode.localdb
-    else:
-        return AppMode.nouser
-
-# --- Main Routes ---
-@main.route("/", methods=["GET"])
-def index():
-    """Index Page. If logged in, redirect to profile."""
-    username = session.get('username', 'Guest')
-    email = session.get('email', 'Guest')
-    db_role = session.get('db_role', 'Guest')
-    app_mode = get_current_app_mode()
-    
-    logger.debug(f"Rendering index with app_mode: {app_mode}")
-    
-    return render_template("index.html", username=username, email=email, app_mode=app_mode, user_role=db_role)
-
-@main.route('/home', methods=['GET'])
-def home():
-    app_mode = get_current_app_mode()
-    user_role = session.get('db_role', 'Guest')
-
-    """ Redirect to index."""
-    return redirect(url_for('main.index', app_mode=app_mode, user_role=user_role))
-
-@main.route('/profile', methods=['GET'])
-@login_required
-def profile():
-    """Profile Page. If not logged in, redirect to login."""
-    client = GraphClient(session.get('email'))
-    if not session.get('access_token'):
-        logger.warning("No access token found, redirecting to login")
-        return redirect(url_for('user.login'))
-    try:
-        contacts = client.get_contacts() # if false, empty app_mode
-        app_mode = get_current_app_mode()
-        user_role = session.get('db_role', 'Guest')
-    except Exception as e:
-        logger.error(f"Error: {e}") 
-        return redirect(url_for('main.index'))
-    return render_template(
-        "profile.html",
-        username=session.get('username'),
-        email=session.get('email'),
-        contacts=contacts,
-        app_mode=app_mode,
-        user_role=user_role
-    ) 
-
 # --- User Routes ---
-@user.route('/login', methods=['GET', 'POST'])
+@user.route("/login", methods=["GET", "POST"])
 def login():
-    """Login first local, then oauth2. (Graph API)"""
+    """ Login page -> get_auth_url() -> redirect back to /callback """
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-
-        if check_login(email, password):
-            session['email'] = email
-            session['username'], session['db_role'] = get_username(email)
-            client = GraphClient(email)
-            logger.info(f"Local login for '{email}' Ok, redirecting to {client.get_auth_redirect_url()}")
-            redirect_url = client.get_auth_redirect_url()
-            # redirect to Microsoft login
-            return redirect(redirect_url)
+        
+        logger.debug(f"Login attempt: {email}")
+        user_id = check_login(email, password)
+        session['user_id'] = user_id
+        if user_id:
+            # set user data from method set_user() -> dict(4)
+            session['username'], session['email'], session['db_role'], session['created_at'] = set_user(user_id).values()
+            flash('DB Login successful', 'success')
+            logger.debug(f"DB Login successful: {email}")
+            client.set_user_id(session['email']) # set email for /users/{email}/contacts
+            return redirect(client.get_auth_url())
         else:
-            logger.warning(f"Local login for '{email}' failed, redirecting to login")
-            flash("Login failed, wrong credentials", "danger")
-            return redirect(url_for('user.login'))
+            flash('Login failed', 'danger')
+            logger.debug(f"DB Login failed: {email}")
+            return redirect(url_for('main.index'))
+        
+    
+    app_mode = get_app_mode()
+    return render_template('login.html', app_mode=app_mode, role=session.get('db_role', 'guest'))
 
-    app_mode = get_current_app_mode()  
-    logger.debug("Rendering login page")
-    return render_template("login.html", app_mode=app_mode)
+@user.route("/callback", methods=["GET"])
+def callback():
+    """ Callback from /login -> get_auth_url() -> redirect back to /callback """
+    code = request.args.get('code')
+    if code:
+        logger.debug(f"Callback with code: {code[:10]}")
+        client.get_access_token(code)
+        session['access_token'] = client.access_token
+        session['refresh_token'] = client.refresh_token_value  # Update this
+        session['token_expires_at'] = client.token_expires_at
+        return redirect(url_for('main.index'))
+    else:
+        return redirect(url_for('user.login'))
 
-@user.route('/register', methods=['GET', 'POST'])
+@user.route("/register", methods=["GET", "POST"])
 def register():
-    """Register new user locally"""
+    """ Register page """
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
         password = request.form['password']
-
+        
+        logger.debug(f"Register attempt: {email}")
         if check_register(username, email, password):
-            logger.info(f"User '{email}' registered, redirecting to login")
-            flash("Registration successful", "success")
-            return redirect(url_for('main.index'))
+            flash('Registration successful', 'success')
+            logger.debug(f"Registration successful: {email}")
+            return redirect(url_for('user.login'))
         else:
-            logger.warning(f"User '{email}' could not be registered, redirecting to register")
-            flash("Registration failed, domain not allowed or user already exists", "danger")
+            flash('Registration failed', 'danger')
+            logger.debug(f"Registration failed: {email}")
             return redirect(url_for('user.register'))
-
-    app_mode = get_current_app_mode()  
-    logger.debug("Rendering register page")
-    return render_template("register.html", app_mode=app_mode)
-
-@user.route('/logout', methods=['GET'])
-def logout():
-    """Benutzer abmelden."""
-    flash("Logout successful", "success")
-    logger.info(f"Logging out user '{session.get('email', 'Guest')}'")
-    session.pop('email', None)
-    session.pop('username', None)
-    session.pop('access_token', None)
-    session.pop('app_mode', None)
-
-    client = GraphClient()
-    client.reset()
     
-    app_mode = get_current_app_mode()  
-    return render_template("logout.html", app_mode=app_mode)
+    app_mode = get_app_mode()
+    return render_template('register.html', app_mode=app_mode)
 
-# --- unknown routes return to index ---
-@main.route('/<path:path>', methods=['GET'])
-def unknown_route(path):
-    """ All unknown routes redirect to index."""
-    flash(f"Unknown route '{path}', redirecting to index", "warning")
-    app_mode = get_current_app_mode()  
-    return redirect(url_for('main.index', app_mode=app_mode))
+@user.route("/logout", methods=["GET"])
+def logout():
+    """ Logout user """
+    session.clear() # clear all session data
+    client.access_token = None
+    client.refresh_token_value = None
+    client.token_expires_at = None
 
-# get here from /login -> redirect
-@user.route('/callback', methods=['GET'])
-def callback():
-    """Callback from Microsoft login. Get access token."""
-    authorization_code = request.args.get('code')
-    if authorization_code and 'email' in session:
-        logger.info(f"Authorization code received, getting access token.")
-        client = GraphClient(session.get('email'))
-        access_token = client.get_access_token(authorization_code=authorization_code)
-        # save access token in session
-        session['access_token'] = access_token
+    flash('Logout successful', 'success')
+    return redirect(url_for('main.index'))
 
-        # still need to validate access token
-        logger.debug(f"Access token for '{session.get('email')}' received, redirecting to profile")
-        app_mode = get_current_app_mode()  
-        return redirect(url_for('main.profile', app_mode=app_mode))
-    app_mode = get_current_app_mode()  
-    return redirect(url_for('user.login', app_mode=app_mode))
+
+# --- Main Routes ---
+@main.route("/", methods=["GET"])
+def index():
+    """ Index page """
+    username = session.get('username', '/Guest')
+    email = session.get('email', '/Guest')
+    role = session.get('db_role', '/guest')
+    mode = get_app_mode()
+    logger.debug(f"Index page: {username}, {email}, {role}, /{mode}")
+
+    return render_template("index.html", username=username, email=email, db_role=role, app_mode=mode)
+
+
+@main.route("/refresh", methods=["GET"])
+@login_required
+def refresh_page():
+    try:
+        client.get_token_from_session(session)
+        client.ensure_valid_token()
+    except Exception as e:
+        logger.error(f"/r Error: {e}")
+        return redirect(url_for('main.index'))
+    return redirect(url_for('main.dashboard'))
+
+
+@main.route("/dashboard", methods=["GET"])
+@login_required
+def dashboard():
+    """ Dashboard page """
+    username = session.get('username', '/Guest')
+    email = session.get('email', '/Guest')
+    role = session.get('db_role', '/guest')
+    mode = get_app_mode()
+    logger.debug(f"Dashboard page: {username}, {email}, {role}, {mode}")
+    try:
+        client.get_token_from_session(session)
+        # get all contacts 
+        contacts_list = client.get_contacts()
+        contacts = [format_contact(c) for c in contacts_list]
+        logger.info(f"Found {len(contacts)} contacts for: {email}")
+    except Exception as e:
+        logger.error(f"d/ Error: {e}")
+        return redirect(url_for('main.index'))
+    
+    return render_template("dashboard.html", username=username, email=email, user_role=role, app_mode=mode, contacts=contacts)
+
+
+# contact/<action> routes
+@main.route("/contact/<action>", methods=["POST"])
+@login_required
+def contact_action(action):
+    """ Crreate, update, delete contact """
+    action = request.form.get('action')
+    logger.debug(f"Contact action: {action}")
+    
+    if action == 'create':
+        pass
+    elif action == 'update':
+        pass
+    elif action == 'delete':
+        pass
+    else:
+        logger.error(f"Invalid action: {action}")
+        return redirect(url_for('main.dashboard'))
+    

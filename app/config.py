@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), 'ignore', '.env'))
 
-class Config:
+class ConfigVars:
     """ Configuration keys for Graph API """
     CLIENT_ID = os.getenv("CLIENT_ID")
     CLIENT_SECRET = os.getenv("CLIENT_SECRET")
@@ -12,15 +12,18 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY") # Flask secret key
     REDIRECT_URI = os.getenv("REDIRECT_URI")
     LOG_PATH = os.path.join(os.path.dirname(__file__), 'ignore', 'app.log')
+    URL_ME = os.getenv("URL_me") # /me
 
-class DB_Tables:
+
+class DB_Models:
     """ Database configuration & tables """
     DB_NAME = "contacts.db"
     DB_PATH = os.path.join(os.path.dirname(__file__), 'ignore', DB_NAME) # dir ignore/contacts.db
 
     @staticmethod
-    def create_tables():
-        conn = sqlite3.connect(DB_Tables.DB_PATH)
+    def init_db():
+        """ Create database and tables """
+        conn = sqlite3.connect(DB_Models.DB_PATH)
         c = conn.cursor()
         
         # TB user
@@ -29,7 +32,8 @@ class DB_Tables:
                     username TEXT NOT NULL,
                     email TEXT NOT NULL UNIQUE, -- Must be unique
                     password TEXT NOT NULL,
-                    role TEXT DEFAULT 'user' NOT NULL -- user or admin
+                    role TEXT DEFAULT 'user' NOT NULL, -- user or admin
+                    created_at TEXT DEFAULT CURRENT_TIMESTAMP NOT NULL
                     )''')
         
         # TB contacts -> This client as Master DB
@@ -96,6 +100,7 @@ class DB_Tables:
         conn.commit() # save
         conn.close() # close connection
 
+
 class Tests:
     """ Test User for local database """
     name = os.getenv("test_user_a")
@@ -105,7 +110,7 @@ class Tests:
 
     def create_user(hashed_pw):
         """ Create a user by default (needs hashed pw!) """
-        conn = sqlite3.connect(DB_Tables.DB_PATH)
+        conn = sqlite3.connect(DB_Models.DB_PATH)
         c = conn.cursor()
         c.execute("SELECT email FROM users WHERE email = ?", (Tests.email,))
         user = c.fetchone()
@@ -117,5 +122,13 @@ class Tests:
         else:
             conn.close()
             return False
+
+
+class AppMode:
+    """ App modes for header. (local database, ms-exchange, logged out)"""
+    # app mode will be refreshed on every / route
+    localdb = "Connected to local database"
+    msgraph = "Connected to Microsoft Exchange"
+    nouser = "not logged in"
         
 

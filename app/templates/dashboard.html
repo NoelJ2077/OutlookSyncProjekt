@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Profile Page{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <h1>Welcome to the Profile / Dashboard Page</h1>
+    <p>Welcome, {{ username }} ({{ email }})</p>
+
+    <div class="row">
+        <!-- Seitenleiste mit Ordnern -->
+        <div class="col-md-3 sidebar">
+            <h3>Folders</h3>
+            <ul class="list-group folder-list">
+                <li class="list-group-item folder-item active" data-folder="all">All Contacts</li>
+                <li class="list-group-item folder-item" data-folder="favorites">Favorites</li>
+                <!-- Weitere Ordner könnten hier dynamisch hinzugefügt werden -->
+            </ul>
+        </div>
+
+        <!-- Hauptbereich für Kontakte -->
+        <div class="col-md-9 content">
+            <h3>Contacts</h3>
+            <div id="contact-list">
+                {% if contacts %}
+                    {% for contact in contacts %}
+                        <div class="contact-card">
+                            <div class="contact-avatar" style="background-color: #007bff; color: white; text-align:center; line-height:50px;">
+                                {% if contact.icon %}
+                                    <img src="{{ contact.icon }}" alt="Avatar" style="width: 50px; height: 50px; border-radius: 50%;">
+                                {% else %}
+                                    {{ contact.displayName[0] if contact.displayName else '?' }}
+                                {% endif %}
+                            </div>
+                            
+                            <div class="contact-info">
+                                <div class="contact-field"><strong>Name:</strong> {{ contact.displayName }} <span style="float: right;">Contact Nr: {{ loop.index }}</span></div>
+                                <div class="contact-field"><strong>Email:</strong> {{ contact.primaryEmail }}<span style="float: right;"><a class="contact_link_edit" href="#" class="edit-contact" data-contact-id="{{ contact.id }}">Edit Contact</a></span></div>
+                                <div class="contact-field"><strong>Company:</strong> {{ contact.companyName }}<span style="float: right;"><a class="contact_link_del" href="#" class="delete-contact" data-contact-id="{{ contact.id }}">Delete Contact</a></span></div>
+                                <div class="contact-field">
+                                    <div class="contact_elements">
+                                        {% if contact.customPhoneList %}
+                                            {% for phone in contact.customPhoneList %}
+                                                {{ phone.phone | safe }}
+                                            {% endfor %}
+                                        {% else %}
+                                            <strong><em>No phone numbers</em></strong>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="contact-field"><!-- Physical Adresses (business, home, other) -->
+                                    <div class="contact_elements">
+                                        {% for adr in contact.customAddressList %}
+                                            <div>
+                                                {{ adr.address | safe }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                <!-- next -->
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>No contacts found.</p>
+                {% endif %}
+            </div>            
+        </div>
+
+    </div>
+</div>
+{% endblock %}

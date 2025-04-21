@@ -1,21 +1,20 @@
+# app/__init__.py
 from flask import Flask
-from .config import Config, DB_Tables
-import logging
+from .config import ConfigVars, DB_Models
+from .client import GraphClient
+import logging, os
 
 logger = logging.getLogger(__name__)
 logger_initialized = False
+client = GraphClient() # one and only instance of GraphClient
 
 def create_app():
     """ Create Flask App including Database and Logger. """
     global logger_initialized
+    timeformat = '%H:%M:%S %d.%m.%Y' # 15:45:10 20.03.2025
 
     app = Flask(__name__)
-    app.config.from_object(Config)  # get Graph values
-    app.secret_key = Config.SECRET_KEY  # Flask Session Key
-    log_path = Config.LOG_PATH  # Log file path
-    DB_Tables.create_tables() # Create DB with tables
-
-    timeformat = '%H:%M:%S %d.%m.%Y' # 15:45:10 20.03.2025
+    log_path = ConfigVars.LOG_PATH # log file path
 
     if not logger_initialized:
         logger.setLevel(logging.DEBUG)
@@ -37,12 +36,26 @@ def create_app():
 
         logger_initialized = True # Logger is initialized
 
-    logger.debug("App created 'debug'")  # Log-Debug
-    logger.info("App started 'info'")  # Log-Info
+        # Change werkzeug log level
+        werkzeug_logger = logging.getLogger('werkzeug')
+        werkzeug_logger.setLevel(logging.WARNING)
 
-    # Change werkzeug log level
-    werkzeug_logger = logging.getLogger('werkzeug')
-    werkzeug_logger.setLevel(logging.WARNING)
+    logger.info("App started")
+
+    # if client initialized, true
+    if not client:
+        logger.debug("Error: GraphClient not initialized")
+        return False
+    app.config.from_object(ConfigVars)
+    app.secret_key = ConfigVars.SECRET_KEY
+    logger.debug("Client, ConfigVars and Secret Key set / initialized")
+    
+    # conditional:
+    if not os.path.exists(DB_Models.DB_PATH):
+        DB_Models.init_db()
+        logger.debug("Database initialized")
+    else:
+        logger.debug("Found existing database")
 
     from .routes import main, user
     app.register_blueprint(main)
