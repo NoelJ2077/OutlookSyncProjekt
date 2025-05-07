@@ -1,6 +1,8 @@
 #app/routes.py
 from app.helpermethods import * # check_login, get_username, get_current_app_mode
+# import client and client actions
 from app import client
+from app.client_actions import get_contacts, create_contact
 import logging
 from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
@@ -57,7 +59,7 @@ def callback():
         session['access_token'] = client.access_token
         session['refresh_token'] = client.refresh_token_value  # Update this
         session['token_expires_at'] = client.token_expires_at
-        return redirect(url_for('main.index'))
+        return redirect(url_for('main.dashboard'))
     else:
         return redirect(url_for('user.login'))
 
@@ -131,7 +133,7 @@ def dashboard():
     try:
         client.get_token_from_session(session)
         # get all contacts 
-        contacts_list = client.get_contacts()
+        contacts_list = get_contacts()
         contacts = [format_contact(c) for c in contacts_list]
         logger.info(f"Found {len(contacts)} contacts for: {email}")
     except Exception as e:

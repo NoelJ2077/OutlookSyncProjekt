@@ -101,32 +101,3 @@ class GraphClient:
             self.refresh_token()
 
 
-    def get_contacts(self):
-        """ Get all contacts from /contacts """
-        logger.debug("Getting contacts") # ok
-        self.ensure_valid_token()
-        headers = {"Authorization": f"Bearer {self.access_token}"}
-        
-        try:
-            response = requests.get(ConfigVars.URL_ME, headers=headers)
-            response.raise_for_status()
-            contacts_raw = response.json()
-            contacts = contacts_raw.get("value", [])
-            return contacts
-        except requests.RequestException as e:
-            logger.error(f"Failed to get contacts: {e}")
-            raise
-    
-    def create_contact(self, contact):
-        """ Create a new contact """
-        self.ensure_valid_token()
-        headers = {"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"}
-        try:
-            response = requests.post(ConfigVars.URL_ME, headers=headers, json=contact)
-            response.raise_for_status()
-            contact = response.json()
-            return contact
-        except requests.RequestException as e:
-            logger.error(f"Failed to create contact: {e}")
-            raise
-

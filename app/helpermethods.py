@@ -8,7 +8,6 @@ from app.client import GraphClient
 
 logger = logging.getLogger(__name__)
 
-
 def check_login(email, password):
     """ Check if the email exists in the database and if the password is correct. """
     try:
@@ -31,7 +30,6 @@ def check_login(email, password):
         return False
     except sqlite3.DatabaseError as e:
         logger.error(f"Error: {e}")
-    
 
 def check_register(username, email, password):
     """ First check if the domain is allowed, then check if the email is already in the database. If not, register the user. """
@@ -63,7 +61,6 @@ def check_register(username, email, password):
         logger.error(f"Error: {e}")
         return False
 
-
 def set_user(u_id):
     """ Set user session variables. (username, role, login time)"""
     try:
@@ -86,7 +83,6 @@ def set_user(u_id):
     except sqlite3.DatabaseError as e:
         logger.error(f"Error: {e}")
         return False
-
 
 def get_app_mode():
     """Get current API Status."""
@@ -118,7 +114,6 @@ def format_address(prefix, c_address):
     # HTML-Zeilenumbrüche statt \n
     formatted = "<br>".join(parts)
     return f"<strong>{prefix}:</strong><br>{formatted}" if formatted else None
-
 
 def format_contact(contact):
     """Render each contact in a custom format."""
@@ -171,4 +166,3 @@ def format_contact(contact):
     except Exception as e:
         logger.error("Fehler beim Formatieren eines Kontakts: %s", e)
         return contact
-
