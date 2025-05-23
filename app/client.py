@@ -5,8 +5,8 @@ from app.config import ConfigVars
 logger = logging.getLogger(__name__)
 
 class GraphClient:
-    def __init__(self, access_token=None):
-        self.token_url = f"https://login.microsoftonline.com/{ConfigVars.TENANT_ID}/oauth2/v2.0/token"  # Wieder eingefügt, da es benötigt wird
+    def __init__(self, access_token=None): # can be called with a token for example from a session
+        self.token_url = f"https://login.microsoftonline.com/{ConfigVars.TENANT_ID}/oauth2/v2.0/token"
         self.client_id = ConfigVars.CLIENT_ID
         self.client_secret = ConfigVars.CLIENT_SECRET
         self.scope = "https://graph.microsoft.com/.default offline_access"  # `offline_access` für refresh_token
@@ -18,7 +18,7 @@ class GraphClient:
         logger.info("GraphClient initialized")
 
     def set_user_id(self, user_id):
-        self.user_id = user_id
+        self.user_id = user_id # email address
 
     def get_auth_url(self):
         """ Get OAuth2 Authorization URL """
@@ -99,5 +99,3 @@ class GraphClient:
         if time.time() > self.token_expires_at:
             logger.debug("Session token expired, attempting refresh...")
             self.refresh_token()
-
-

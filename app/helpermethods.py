@@ -1,6 +1,6 @@
 # login process, check db stuff etc.
 # If login yes but not in Tenant, error / 403
-import sqlite3, logging, requests
+import sqlite3, logging, json, datetime
 from app.config import DB_Models, AppMode
 from app.ignore.hashing import check_domain, hash_password, verify_password
 from flask import session
@@ -9,7 +9,9 @@ from app.client import GraphClient
 logger = logging.getLogger(__name__)
 
 def check_login(email, password):
-    """ Check if the email exists in the database and if the password is correct. """
+    """ Check if the email exists in the database and if the password is correct. 
+    - returns the user_id (int)
+    """
     try:
         if not check_domain(email):
             splitdomain = email.split("@")
@@ -23,10 +25,11 @@ def check_login(email, password):
         conn.close()
 
         if user and verify_password(password, user[0]):
-            logger.debug(f"Local login successful for: {email}")
-            return user[1] # user_id
+            logger.debug(f"Local login successful for: {email}", "success")
+            # return email
+            return email
         
-        logger.debug(f"Local login failed for: {email}")
+        logger.debug(f"Local login failed for: {email}", "danger")
         return False
     except sqlite3.DatabaseError as e:
         logger.error(f"Error: {e}")
@@ -61,12 +64,18 @@ def check_register(username, email, password):
         logger.error(f"Error: {e}")
         return False
 
-def set_user(u_id):
-    """ Set user session variables. (username, role, login time)"""
+def get_user_data(email):
+    """ Gets user data from user_id(mail) in database and return a dict.  
+    - username
+    - email
+    - role
+    - created_at
+    """
+    logger.debug("set user from id: %s", email)
     try:
         conn = sqlite3.connect(DB_Models.DB_PATH)
         c = conn.cursor()
-        c.execute("SELECT username, email, role, created_at FROM users WHERE id = ?", (u_id,))
+        c.execute("SELECT username, email, role, created_at FROM users WHERE email = ?", (email,))
         user = c.fetchone()
         conn.close()
 
@@ -79,7 +88,14 @@ def set_user(u_id):
             }
             return data
         else:
-            return False
+            data = {
+                "username": None,
+                "email": None,
+                "role": None,
+                "created_at": None
+            }
+            return data
+            
     except sqlite3.DatabaseError as e:
         logger.error(f"Error: {e}")
         return False
@@ -115,10 +131,22 @@ def format_address(prefix, c_address):
     formatted = "<br>".join(parts)
     return f"<strong>{prefix}:</strong><br>{formatted}" if formatted else None
 
+def format_date(date_str):
+    """ Formats a date from ISO 8601 to a swiss date format. """
+    if not date_str:
+        return None
+    try:
+        date = datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
+        return date.strftime("%d %B %Y")
+    except ValueError:
+        logger.error("Invalid date format: %s", date_str)
+        return None
+
 def format_contact(contact):
     """Render each contact in a custom format."""
     try:
         contact["displayName"] = contact.get("displayName") or "—"
+
         # mails
         email = None
         if contact.get("emailAddresses") and contact["emailAddresses"]:
@@ -126,7 +154,7 @@ def format_contact(contact):
         contact["primaryEmail"] = email or "—"
 
         # phones example output: <strong>Mobile:</strong>+number<\t><strong>Business:</strong>+number
-        phones = [] 
+        phones = []
         phone_types = [
             ("Business phone", contact.get("businessPhones")),
             ("Mobile phone", contact.get("mobilePhone")),
@@ -139,7 +167,6 @@ def format_contact(contact):
                         phones.append(f"<strong>{prefix}:</strong> {number}")
                 else:
                     phones.append(f"<strong>{prefix}:</strong> {c_phone}")
-        #contact["customPhoneList"] = phones if phones else []
         contact["customPhoneList"] = [{"phone": p} for p in phones] if phones else []
 
         # addresses
@@ -153,16 +180,48 @@ def format_contact(contact):
             formatted_address = format_address(prefix, c_address)
             if formatted_address:
                 addresses.append(formatted_address)
-        #contact["customAddressList"] = addresses if addresses else []
         contact["customAddressList"] = [{"address": a} for a in addresses] if addresses else []
 
-        
-        
-        # Firma-Fallback
+        # company fallback
         contact["companyName"] = contact.get("companyName") or "—"
-
+        
+        contact["extra_fields"] = []
+        # veraltet als dict
+        extra_fields = [
+            ("MiddleName", contact.get("middleName")),
+            ("Nickname", contact.get("nickName")),
+            ("Initials", contact.get("initials")),
+            ("Birthday", format_date(contact.get("birthday"))),
+            ("Department", contact.get("department")),
+            ("Job title", contact.get("jobTitle")),
+            ("Manager", contact.get("manager")),
+            ("Assistant", contact.get("assistantName")),
+            ("Spouse", contact.get("spouseName")),
+            ("Profession", contact.get("profession")),
+            ("Title", contact.get("title")),
+        ]
+        # Nur füllen, wenn nicht leere Felder
+        for key, value in extra_fields:
+            if value:
+                contact["extra_fields"].append({"name": key, "value": value})
+            
         return contact
 
     except Exception as e:
         logger.error("Fehler beim Formatieren eines Kontakts: %s", e)
         return contact
+
+def load_schema():
+    """ Load contact schema from JSON file returns a dict. """
+    with open("app/static/ressource.json", "r") as f:
+        schema = json.load(f)
+        #logger.debug(f"Contact schema loaded with {len(schema)} fields.")
+    return schema
+
+def create_backup(con):
+    """ Makes a backup of 1 contact on local db. Methos gets usually called in a loop. """
+    pass
+
+
+
+

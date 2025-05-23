@@ -6,7 +6,7 @@ import logging, os
 
 logger = logging.getLogger(__name__)
 logger_initialized = False
-client = GraphClient() # one and only instance of GraphClient
+client = GraphClient() # App wide instance of Client.
 
 def create_app():
     """ Create Flask App including Database and Logger. """

@@ -35,8 +35,8 @@
                             
                             <div class="contact-info">
                                 <div class="contact-field"><strong>Name:</strong> {{ contact.displayName }} <span style="float: right;">Contact Nr: {{ loop.index }}</span></div>
-                                <div class="contact-field"><strong>Email:</strong> {{ contact.primaryEmail }}<span style="float: right;"><a class="contact_link_edit" href="#" class="edit-contact" data-contact-id="{{ contact.id }}">Edit Contact</a></span></div>
-                                <div class="contact-field"><strong>Company:</strong> {{ contact.companyName }}<span style="float: right;"><a class="contact_link_del" href="#" class="delete-contact" data-contact-id="{{ contact.id }}">Delete Contact</a></span></div>
+                                <div class="contact-field"><strong>Email:</strong> {{ contact.primaryEmail }}<span style="float: right;"><a href="#" class="edit-contact" data-contact-id='{{ contact.id }}'>edit</a></span></div>
+                                <div class="contact-field"><strong>Company:</strong> {{ contact.companyName }}<span style="float: right;"><a href="#" class="delete-contact" data-contact-id='{{ contact.id }}'>delete</a></span></div>
                                 <div class="contact-field">
                                     <div class="contact_elements">
                                         {% if contact.customPhoneList %}
@@ -57,9 +57,26 @@
                                         {% endfor %}
                                     </div>
                                 </div>
-                                <!-- next -->
-                            </div>
-                        </div>
+                                <div class="contact-field"><strong>Given Name:</strong> {{ contact.givenName }}</div>
+                                <div class="contact-field"><strong>Surname:</strong> {{ contact.surname }}</div>
+                                <div class="contact-field"><strong>Nickname:</strong> {{ contact.nickName }}</div>
+                                <div class="contact-field">
+                                    <div class="extra-fields">
+                                        {% if contact.extra_fields %}
+                                            {% for field in contact.extra_fields %}
+                                                <div>
+                                                    <strong>{{ field.name}}:</strong> {{ field.value}}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            <strong><em>No extra fields</em></strong>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="contact-field"><strong>Notes:</strong> {{ contact.personalNotes }}</div>
+                                <div class="contact-field"><strong>Business Homepage:</strong> {{ contact.businessHomePage }}</div>
+                            </div><!-- contact-info -->
+                        </div><!-- contact-card -->
                     {% endfor %}
                 {% else %}
                     <p>No contacts found.</p>
@@ -69,4 +86,10 @@
 
     </div>
 </div>
+<!-- dashboard.html -->
+<div id="editContactModal">
+    {% include 'modals/edit_contact_modal.html' %}
+</div>
+
 {% endblock %}
+

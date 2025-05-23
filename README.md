@@ -18,3 +18,25 @@
 - Tenant_ID=tenant_string
 - SECRET_KEY=secret_key_string_for_flask
 - REDIRECT_URI=http://localhost:5000/callback # 5000 -> Flask default port
+
+# Project structure from root /folder:
+requirements.txt
+run.py
+app/
+    __init.py__
+    client_actions.py
+    client.py
+    config.py
+    helpermethods.py
+    routes.py
+    ignore/
+        app.log
+        contacts.db
+        .env
+        hashing.py
+    static/
+        dashboard.css
+        # standard Flask files.
+    templates/
+        index.html
+        # All html pages

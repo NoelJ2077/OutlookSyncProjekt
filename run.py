@@ -20,4 +20,5 @@ if __name__ == '__main__':
     logger.info(f"Local host IPv4 address: {host_ipv4}")
 
     # run on all local network interfaces
-    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True) # use_reloader=False to avoid double logging with werkzeug, but this will take changes in code upon restart
+    app.run(host='0.0.0.0', port=5000, debug=True, use_reloader=True)
+    

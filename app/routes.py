@@ -2,7 +2,7 @@
 from app.helpermethods import * # check_login, get_username, get_current_app_mode
 # import client and client actions
 from app import client
-from app.client_actions import get_contacts, create_contact
+from app.client_actions import get_contacts, create_contact, update_contact, get_contact, delete_contact
 import logging
 from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
@@ -35,13 +35,11 @@ def login():
         session['user_id'] = user_id
         if user_id:
             # set user data from method set_user() -> dict(4)
-            session['username'], session['email'], session['db_role'], session['created_at'] = set_user(user_id).values()
-            flash('DB Login successful', 'success')
+            session['username'], session['email'], session['db_role'], session['created_at'] = get_user_data(user_id).values()
             logger.debug(f"DB Login successful: {email}")
             client.set_user_id(session['email']) # set email for /users/{email}/contacts
             return redirect(client.get_auth_url())
         else:
-            flash('Login failed', 'danger')
             logger.debug(f"DB Login failed: {email}")
             return redirect(url_for('main.index'))
         
@@ -59,6 +57,9 @@ def callback():
         session['access_token'] = client.access_token
         session['refresh_token'] = client.refresh_token_value  # Update this
         session['token_expires_at'] = client.token_expires_at
+        
+        session['user_id'] = client.user_id
+        
         return redirect(url_for('main.dashboard'))
     else:
         return redirect(url_for('user.login'))
@@ -122,14 +123,19 @@ def refresh_page():
 
 
 @main.route("/dashboard", methods=["GET"])
-@login_required
+@login_required # Beim anmelden erscheint beim ersten mal dieser Fehler not logged in, obwohl ich angemeldet bin, warum?
 def dashboard():
     """ Dashboard page """
-    username = session.get('username', '/Guest')
-    email = session.get('email', '/Guest')
-    role = session.get('db_role', '/guest')
+    user_d = get_user_data(session['user_id'])
+    
+    username = user_d['username']
+    email = user_d['email']
+    role = user_d['role']
+    created_at = user_d['created_at']
+    
     mode = get_app_mode()
-    logger.debug(f"Dashboard page: {username}, {email}, {role}, {mode}")
+    schema = load_schema()
+    logger.debug(f"Dashboard page: {username}, {email}, {role}, /{mode}")
     try:
         client.get_token_from_session(session)
         # get all contacts 
@@ -140,24 +146,46 @@ def dashboard():
         logger.error(f"d/ Error: {e}")
         return redirect(url_for('main.index'))
     
-    return render_template("dashboard.html", username=username, email=email, user_role=role, app_mode=mode, contacts=contacts)
-
+    return render_template("dashboard.html", username=username, email=email, user_role=role, app_mode=mode, contacts=contacts, schema=schema)
 
 # contact/<action> routes
 @main.route("/contact/<action>", methods=["POST"])
 @login_required
-def contact_action(action):
-    """ Crreate, update, delete contact """
-    action = request.form.get('action')
-    logger.debug(f"Contact action: {action}")
-    
-    if action == 'create':
+def contact(action):
+    """ create, update, delete 1 or multiple contacts
+    - using 1 main modal for all actions. 
+    """
+    if action == "create":
         pass
-    elif action == 'update':
+    elif action == "update":
         pass
-    elif action == 'delete':
+    elif action == "delete":
         pass
     else:
         logger.error(f"Invalid action: {action}")
+        flash('Invalid action', 'danger')
         return redirect(url_for('main.dashboard'))
     
+@main.route("/backup_contacts", methods=["GET"])
+@login_required
+def backup_contacts():
+    """ Backup contacts to local database """
+    try:
+        #client.get_token_from_session(session)
+        #client.ensure_valid_token()
+        contacts = get_contacts()
+        
+        # make a backup of contacts locally. 
+        for con in contacts:
+            create_backup(con)
+        logger.info(f"{len(contacts)} contacts backed up")
+
+        flash('Contacts backed up successfully', 'success')
+        logger.debug(f"Contacts backed up successfully")
+    except Exception as e:
+        logger.error(f"Failed to backup contacts: {e}")
+        flash('Failed to backup contacts', 'danger')
+    return redirect(url_for('main.dashboard'))
+
+
+            

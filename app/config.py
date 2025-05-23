@@ -39,52 +39,51 @@ class DB_Models:
         # TB contacts -> This client as Master DB
         # Use case when this application is the master DB
         c.execute('''CREATE TABLE IF NOT EXISTS contacts (
-                    id TEXT PRIMARY KEY,                     -- string (identifier)
-                    assistantName TEXT,                      -- string
-                    birthday TEXT,                           -- String (timestamp)
-                    businessAddress TEXT,                    -- physicalAddress als JSON
-                    businessHomePage TEXT,                   -- string
-                    businessPhones TEXT,                     -- Array von Strings (als JSON)
-                    categories TEXT,                         -- Array von Strings (als JSON)
-                    changeKey TEXT,                          -- string
-                    children TEXT,                           -- Array von Strings (als JSON)
-                    companyName TEXT,                        -- string
-                    createdDateTime TEXT,                    -- String (timestamp)
-                    department TEXT,                         -- string
-                    displayName TEXT,                        -- string
-                    emailAddresses TEXT,                     -- Array von EmailAddress-Objekten (als JSON)
-                    fileAs TEXT,                             -- string
-                    generation TEXT,                         -- string
-                    givenName TEXT,                          -- string
-                    homeAddress TEXT,                        -- physicalAddress als JSON
-                    homePhones TEXT,                         -- Array von Strings (als JSON)
-                    imAddresses TEXT,                        -- Array von Strings (als JSON)
-                    initials TEXT,                           -- string
-                    jobTitle TEXT,                           -- string
-                    lastModifiedDateTime TEXT,               -- String (timestamp)
-                    manager TEXT,                            -- string
-                    middleName TEXT,                         -- string
-                    mobilePhone TEXT,                        -- string
-                    nickName TEXT,                           -- string
-                    officeLocation TEXT,                     -- string
-                    otherAddress TEXT,                       -- physicalAddress als JSON
-                    parentFolderId TEXT,                     -- string
-                    personalNotes TEXT,                      -- string
-                    photo TEXT,                              -- profilePhoto als JSON (oder BLOB, je nach Bedarf)
-                    profession TEXT,                         -- string
-                    spouseName TEXT,                         -- string
-                    surname TEXT,                            -- string
-                    title TEXT,                              -- string
-                    yomiCompanyName TEXT,                    -- string
-                    yomiGivenName TEXT,                      -- string
-                    yomiSurname TEXT,                        -- string
-                    
-                    user_id INTEGER NOT NULL,                   -- self added -> key to user
-                    folder_id TEXT NOT NULL,                    -- self added -> key to folder
-                    FOREIGN KEY(user_id) REFERENCES users(id),  -- self added
-                    FOREIGN KEY(folder_id) REFERENCES folders(id) -- self added -> key to folder duplicate for my app
-                  
-                    )''')
+                    assistantName TEXT,
+                    birthday TEXT,
+                    businessAddress TEXT,                  -- JSON: microsoft.graph.physicalAddress
+                    businessHomePage TEXT,
+                    businessPhones TEXT,                   -- JSON: list of strings
+                    categories TEXT,                       -- JSON: list of strings
+                    changeKey TEXT,
+                    children TEXT,                         -- JSON: list of strings
+                    companyName TEXT,
+                    createdDateTime TEXT,
+                    department TEXT,
+                    displayName TEXT,
+                    emailAddresses TEXT,                   -- JSON: list of microsoft.graph.emailAddress
+                    fileAs TEXT,
+                    generation TEXT,
+                    givenName TEXT,
+                    homeAddress TEXT,                      -- JSON: microsoft.graph.physicalAddress
+                    homePhones TEXT,                       -- JSON: list of strings
+                    id TEXT PRIMARY KEY,                   -- string (identifier)
+                    imAddresses TEXT,                      -- JSON: list of strings
+                    initials TEXT,
+                    jobTitle TEXT,
+                    lastModifiedDateTime TEXT,
+                    manager TEXT,
+                    middleName TEXT,
+                    mobilePhone TEXT,
+                    nickName TEXT,
+                    officeLocation TEXT,
+                    otherAddress TEXT,                     -- JSON: microsoft.graph.physicalAddress
+                    parentFolderId TEXT,
+                    personalNotes TEXT,
+                    photo TEXT,                            -- JSON: microsoft.graph.profilePhoto
+                    profession TEXT,
+                    spouseName TEXT,
+                    surname TEXT,
+                    title TEXT,
+                    yomiCompanyName TEXT,
+                    yomiGivenName TEXT,
+                    yomiSurname TEXT,
+
+                    user_id INTEGER NOT NULL,                   -- foreign key to users table
+                    folder_id TEXT DEFAULT 'standalone',        -- default folder
+                    FOREIGN KEY(user_id) REFERENCES users(id),
+                    FOREIGN KEY(folder_id) REFERENCES folders(id)
+                )''')
 
 
         # TB contacts -> Outlook as Master DB
