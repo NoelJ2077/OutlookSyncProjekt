@@ -1,12 +1,11 @@
 # app/__init__.py
 from flask import Flask
 from .config import ConfigVars, DB_Models
-from .client import GraphClient
 import logging, os
 
 logger = logging.getLogger(__name__)
 logger_initialized = False
-client = GraphClient() # App wide instance of Client.
+# client = GraphClient() # global client instance (leads to problems when logging in with different accounts)
 
 def create_app():
     """ Create Flask App including Database and Logger. """
@@ -39,13 +38,7 @@ def create_app():
         # Change werkzeug log level
         werkzeug_logger = logging.getLogger('werkzeug')
         werkzeug_logger.setLevel(logging.WARNING)
-
-    logger.info("App started")
-
-    # if client initialized, true
-    if not client:
-        logger.debug("Error: GraphClient not initialized")
-        return False
+    
     app.config.from_object(ConfigVars)
     app.secret_key = ConfigVars.SECRET_KEY
     logger.debug("Client, ConfigVars and Secret Key set / initialized")

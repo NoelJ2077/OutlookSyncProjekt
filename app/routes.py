@@ -1,8 +1,7 @@
 #app/routes.py
 from app.helpermethods import * # Methods before client interacctions. (converte data etc.)
-# import client and client actions
-from app import client
 from app.client_actions import get_contacts, create_contact, update_contact, get_contact, delete_contact
+from app.client import get_client_from_session
 import logging
 from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
@@ -16,28 +15,123 @@ def login_required(f):
     """ Decorator to check if user is logged in via session """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if session.get('user_id') is None:
-            flash('Login required', 'danger')
+        logger.debug(f"Session: {session}")
+        if 'user_id' not in session:
+            flash('You need to log in first', 'danger') # problem hier. login hat geklappt, aber session ist leer
             return redirect(url_for('user.login'))
         return f(*args, **kwargs)
     return decorated_function
+
+# --- Main Routes ---
+@main.route("/", methods=["GET"])
+def index():
+    """ Index page """
+    logger.debug(f"/main.index")
+
+    #logger.debug(f"Session: {session}")
+    user_d = get_user_data(session.get('user_id'))
+    if user_d:
+        username = user_d['username']
+        email = user_d['email']
+        role = user_d['role']
+    else:
+        # set all to Guest via lambda
+        username, email, role = map(lambda x: None, range(3))
+
+    mode = get_app_mode()
+    #logger.debug(f"Index page: {username}, {email}, {role}, /{mode}")
+
+    return render_template("index.html", username=username, email=email, db_role=role, app_mode=mode)
+
+
+@main.route("/dashboard", methods=["GET"])
+@login_required
+def dashboard():
+    """ Dashboard page """
+    logger.debug(f"/main.dasboard")
+
+    user_d = get_user_data(session['user_id'])
+    username = user_d['username']
+    email = user_d['email']
+    role = user_d['role']
+    created_at = user_d['created_at']
+    mode = get_app_mode()
+    schema = load_schema()
+    
+    try:
+        client = get_client_from_session()
+        if not client:
+            logger.error("Client not found in session")
+            return redirect(url_for('user.login'))
+        contacts_list = get_contacts(client)
+        contacts = [format_contact(c) for c in contacts_list]
+
+    except Exception as e:
+        logger.error(f"d/ Error: {e}")
+        return redirect(url_for('main.index'))
+    
+    return render_template("dashboard.html", username=username, email=email, user_role=role, app_mode=mode, contacts=contacts, schema=schema)
+
+# contact/<action> routes
+@main.route("/contact/<action>", methods=["POST"])
+@login_required
+def contact(action):
+    """ create, update, delete 1 or multiple contacts
+    - using 1 main modal for all actions. 
+    """
+    logger.debug(f"/main.contact{action}")
+
+    if action == "create":
+        pass
+    elif action == "update":
+        pass
+    elif action == "delete":
+        pass
+    else:
+        logger.error(f"Invalid action: {action}")
+        flash('Invalid action', 'danger')
+        return redirect(url_for('main.dashboard'))
+    
+@main.route("/backup_contacts", methods=["GET"])
+@login_required
+def backup_contacts():
+    """ Backup contacts to local database """
+    logger.debug(f"/main.backup_contacts")
+
+    try:
+        #client.get_token_from_session(session)
+        #client.ensure_valid_token()
+        contacts = get_contacts()
+        
+        # make a backup of contacts locally. 
+        for con in contacts:
+            create_backup(con)
+        logger.info(f"{len(contacts)} contacts backed up")
+
+        flash('Contacts backed up successfully', 'success')
+        logger.debug(f"Contacts backed up successfully")
+    except Exception as e:
+        logger.error(f"Failed to backup contacts: {e}")
+        flash('Failed to backup contacts', 'danger')
+    return redirect(url_for('main.dashboard'))
+
 
 # --- User Routes ---
 @user.route("/login", methods=["GET", "POST"])
 def login():
     """ Login page -> get_auth_url() -> redirect back to /callback """
+    logger.debug(f"/user.login")
+    
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
         
-        logger.debug(f"Login attempt: {email}")
         user_id = check_login(email, password)
         session['user_id'] = user_id
         if user_id:
-            # set user data from method set_user() -> dict(4)
-            session['username'], session['email'], session['db_role'], session['created_at'] = get_user_data(user_id).values()
             logger.debug(f"DB Login successful: {email}")
-            client.set_user_id(session['email']) # set email for /users/{email}/contacts
+            client = GraphClient() # neu so?
+            client.set_user_id(user_id) # sets email, used as key for all requests
             return redirect(client.get_auth_url())
         else:
             logger.debug(f"DB Login failed: {email}")
@@ -50,15 +144,17 @@ def login():
 @user.route("/callback", methods=["GET"])
 def callback():
     """ Callback from /login -> get_auth_url() -> redirect back to /callback """
+    logger.debug(f"/user.callback")
+
     code = request.args.get('code')
-    if code:
-        logger.debug(f"Callback with code: {code[:10]}")
+    user_id = request.args.get('state')
+    if code and user_id:
+        #logger.debug(f"Callback with code: {code[:10]}")
+        client = GraphClient() # neu so?
+        client.user_id = user_id
+        session['user_id'] = user_id
         client.get_access_token(code)
-        session['access_token'] = client.access_token
-        session['refresh_token'] = client.refresh_token_value  # Update this
-        session['token_expires_at'] = client.token_expires_at
         
-        session['user_id'] = client.user_id
         
         return redirect(url_for('main.dashboard'))
     else:
@@ -67,6 +163,8 @@ def callback():
 @user.route("/register", methods=["GET", "POST"])
 def register():
     """ Register page """
+    logger.debug(f"/user.register")
+
     if request.method == 'POST':
         username = request.form['username']
         email = request.form['email']
@@ -88,105 +186,9 @@ def register():
 @user.route("/logout", methods=["GET"])
 def logout():
     """ Logout user """
-    session.clear() # clear all session data
-    client.access_token = None
-    client.refresh_token_value = None
-    client.token_expires_at = None
-    client.user_id = None
+    logger.debug(f"/user.logout")
 
+    session.clear() # clear all session data
+    
     flash('Logout successful', 'success')
     return redirect(url_for('main.index'))
-
-
-# --- Main Routes ---
-@main.route("/", methods=["GET"])
-def index():
-    """ Index page """
-    username = session.get('username', '/Guest')
-    email = session.get('email', '/Guest')
-    role = session.get('db_role', '/guest')
-    mode = get_app_mode()
-    logger.debug(f"Index page: {username}, {email}, {role}, /{mode}")
-
-    return render_template("index.html", username=username, email=email, db_role=role, app_mode=mode)
-
-
-@main.route("/refresh", methods=["GET"])
-@login_required
-def refresh_page():
-    try:
-        client.get_token_from_session(session)
-        client.ensure_valid_token()
-    except Exception as e:
-        logger.error(f"/refresh Error: {e}")
-        return redirect(url_for('main.index'))
-    return redirect(url_for('main.dashboard'))
-
-
-@main.route("/dashboard", methods=["GET"])
-@login_required # Beim anmelden erscheint beim ersten mal dieser Fehler not logged in, obwohl ich angemeldet bin, warum?
-def dashboard():
-    """ Dashboard page """
-    user_d = get_user_data(session['user_id'])
-    
-    username = user_d['username']
-    email = user_d['email']
-    role = user_d['role']
-    created_at = user_d['created_at']
-    mode = get_app_mode()
-    schema = load_schema()
-    
-    try:
-        client.get_token_from_session(session)
-        # get all contacts 
-        contacts_list = get_contacts()
-        contacts = [format_contact(c) for c in contacts_list]
-        #logger.info(f"Found {len(contacts)} contacts for: {email}")
-        logger.debug(f"/d page: {username}, {email}, {role}, /{mode}")
-    except Exception as e:
-        logger.error(f"d/ Error: {e}")
-        return redirect(url_for('main.index'))
-    
-    return render_template("dashboard.html", username=username, email=email, user_role=role, app_mode=mode, contacts=contacts, schema=schema)
-
-# contact/<action> routes
-@main.route("/contact/<action>", methods=["POST"])
-@login_required
-def contact(action):
-    """ create, update, delete 1 or multiple contacts
-    - using 1 main modal for all actions. 
-    """
-    if action == "create":
-        pass
-    elif action == "update":
-        pass
-    elif action == "delete":
-        pass
-    else:
-        logger.error(f"Invalid action: {action}")
-        flash('Invalid action', 'danger')
-        return redirect(url_for('main.dashboard'))
-    
-@main.route("/backup_contacts", methods=["GET"])
-@login_required
-def backup_contacts():
-    """ Backup contacts to local database """
-    try:
-        #client.get_token_from_session(session)
-        #client.ensure_valid_token()
-        contacts = get_contacts()
-        
-        # make a backup of contacts locally. 
-        for con in contacts:
-            create_backup(con)
-        logger.info(f"{len(contacts)} contacts backed up")
-
-        flash('Contacts backed up successfully', 'success')
-        logger.debug(f"Contacts backed up successfully")
-    except Exception as e:
-        logger.error(f"Failed to backup contacts: {e}")
-        flash('Failed to backup contacts', 'danger')
-    return redirect(url_for('main.dashboard'))
-
-
-            

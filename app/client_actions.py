@@ -1,14 +1,18 @@
 # app/client_actions.py
 import logging, requests
 from app.config import ConfigVars
-# import client
-from app import client
+
 
 logger = logging.getLogger(__name__)
 
-def get_contacts():
-    """ Get all contacts using the globally available client """
-    client.ensure_valid_token()
+# lambda method to check if client:
+hasClient = lambda c: c if c else get_client_from_session()
+
+def get_contacts(client):
+    """ Get all contacts from the user. Needs to be called with a client instance. """
+
+    client = hasClient(client)
+
     headers = {"Authorization": "Bearer %s" % client.access_token}
     
     try:
@@ -20,9 +24,11 @@ def get_contacts():
         logger.error("Failed to get contacts: %s" % e)
         raise
 
-def get_contact(contact_id):
+def get_contact(contact_id, client):
     """ Get a single contact by ID, used for editing. """
-    client.ensure_valid_token()
+
+    client = hasClient(client)
+    
     headers = {"Authorization": "Bearer %s" % client.access_token}
     try:
         response = requests.get(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers)
@@ -33,9 +39,11 @@ def get_contact(contact_id):
         logger.error("Failed to get contact: %s" % e)
         raise
 
-def create_contact(contact):
+def create_contact(contact, client):
     """ Create a new contact using the globally available client """
-    client.ensure_valid_token()
+
+    client = hasClient(client)
+    
     headers = {
         "Authorization": "Bearer %s" % client.access_token,
         "Content-Type": "application/json"
@@ -53,10 +61,11 @@ def update_contact(contact_id):
     logger.debug("Editing contact: %s" % contact_id)
     pass
 
-def delete_contact(contact_id):
+def delete_contact(contact_id, client):
     """ Delete 1 or selected contact(s). """
-    logger.debug("Deleting contact: %s" % contact_id)
-    client.ensure_valid_token()
+    
+    client = hasClient(client)
+
     headers = {"Authorization": "Bearer %s" % client.access_token}
     try:
         response = requests.delete(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers)

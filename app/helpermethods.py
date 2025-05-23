@@ -221,6 +221,3 @@ def create_backup(contacts):
     """ Create a local backup of all contacts."""
     pass
 
-
-
-

@@ -1,6 +1,7 @@
 # app/client.py
 import requests, logging, time
 from app.config import ConfigVars
+from flask import session
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +16,7 @@ class GraphClient:
         self.access_token = access_token
         self.refresh_token_value = None
         self.token_expires_at = 0
-        logger.info("GraphClient initialized")
+        logger.debug("GraphClient initialized")
 
     def set_user_id(self, user_id):
         self.user_id = user_id # email address
@@ -33,10 +34,11 @@ class GraphClient:
             
         }
         auth_url = f"{base_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
-        logger.debug(f"Generated auth URL: {auth_url[:10]}")
+        #logger.debug(f"Generated auth URL: {auth_url[:10]} ...")
         return auth_url
 
     def refresh_token(self):
+        """ Refresh token, if None, raise error """
         if not self.refresh_token_value:
             raise ValueError("No refresh token available")
         data = {
@@ -57,15 +59,7 @@ class GraphClient:
         except requests.RequestException as e:
             logger.error(f"Failed to refresh token: {e}")
             raise
-
-    def ensure_valid_token(self):
-        if not self.access_token or not self.token_expires_at:
-            logger.debug("Missing token or expiration, trying to refresh...")
-            self.refresh_token()
-        elif time.time() > self.token_expires_at:
-            logger.debug("Token expired, refreshing...")
-            self.refresh_token()
-        
+   
     def get_access_token(self, code):
         data = {
             "client_id": self.client_id,
@@ -88,12 +82,29 @@ class GraphClient:
             raise
     
     def get_token_from_session(self, session_keys):
-        self.access_token = session_keys.get("access_token")
-        self.refresh_token_value = session_keys.get("refresh_token")
-        self.token_expires_at = session_keys.get("token_expires_at") or 0  # Fallback
-        
-        logger.debug("Token values loaded from session")
+        """ Load token from session, if expired, try to refresh else raise error """
+        try:
+            self.access_token = session_keys.get("access_token")
+            self.refresh_token_value = session_keys.get("refresh_token")
+            self.token_expires_at = float(session_keys.get("token_expires_at", 0))
 
-        if time.time() > self.token_expires_at:
-            logger.debug("Token expired, refreshing")
-            self.refresh_token()
+            logger.debug("Loaded from session: access=%s refresh=%s expires_at=%s",
+                        bool(self.access_token), bool(self.refresh_token_value), self.token_expires_at)
+
+            if time.time() > self.token_expires_at:
+                logger.debug("Token expired, trying refresh")
+                self.refresh_token()
+        except Exception as e:
+            logger.error(f"Failed to load token from session: {e}")
+            raise
+
+def get_client_from_session():
+    """ Get client from session """
+    try:
+        client = GraphClient()
+        client.get_token_from_session(session)
+        return client
+    except Exception as e:
+        logger.error(f"Failed to get client from session: {e}")
+        raise
+
