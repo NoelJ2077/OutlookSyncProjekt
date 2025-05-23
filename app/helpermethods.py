@@ -71,7 +71,6 @@ def get_user_data(email):
     - role
     - created_at
     """
-    logger.debug("set user from id: %s", email)
     try:
         conn = sqlite3.connect(DB_Models.DB_PATH)
         c = conn.cursor()
@@ -132,7 +131,7 @@ def format_address(prefix, c_address):
     return f"<strong>{prefix}:</strong><br>{formatted}" if formatted else None
 
 def format_date(date_str):
-    """ Formats a date from ISO 8601 to a swiss date format. """
+    """ Formats a date from ISO 8601 to a swiss date format: 'dd Month YYYY'. """
     if not date_str:
         return None
     try:
@@ -212,14 +211,14 @@ def format_contact(contact):
         return contact
 
 def load_schema():
-    """ Load contact schema from JSON file returns a dict. """
+    """ Gets contact schema from JSON file, returns a dict. """
     with open("app/static/ressource.json", "r") as f:
         schema = json.load(f)
         #logger.debug(f"Contact schema loaded with {len(schema)} fields.")
     return schema
 
-def create_backup(con):
-    """ Makes a backup of 1 contact on local db. Methos gets usually called in a loop. """
+def create_backup(contacts):
+    """ Create a local backup of all contacts."""
     pass
 
 

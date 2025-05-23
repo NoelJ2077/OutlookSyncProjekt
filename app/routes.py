@@ -1,5 +1,5 @@
 #app/routes.py
-from app.helpermethods import * # check_login, get_username, get_current_app_mode
+from app.helpermethods import * # Methods before client interacctions. (converte data etc.)
 # import client and client actions
 from app import client
 from app.client_actions import get_contacts, create_contact, update_contact, get_contact, delete_contact
@@ -92,6 +92,7 @@ def logout():
     client.access_token = None
     client.refresh_token_value = None
     client.token_expires_at = None
+    client.user_id = None
 
     flash('Logout successful', 'success')
     return redirect(url_for('main.index'))
@@ -117,7 +118,7 @@ def refresh_page():
         client.get_token_from_session(session)
         client.ensure_valid_token()
     except Exception as e:
-        logger.error(f"/r Error: {e}")
+        logger.error(f"/refresh Error: {e}")
         return redirect(url_for('main.index'))
     return redirect(url_for('main.dashboard'))
 
@@ -132,16 +133,16 @@ def dashboard():
     email = user_d['email']
     role = user_d['role']
     created_at = user_d['created_at']
-    
     mode = get_app_mode()
     schema = load_schema()
-    logger.debug(f"Dashboard page: {username}, {email}, {role}, /{mode}")
+    
     try:
         client.get_token_from_session(session)
         # get all contacts 
         contacts_list = get_contacts()
         contacts = [format_contact(c) for c in contacts_list]
-        logger.info(f"Found {len(contacts)} contacts for: {email}")
+        #logger.info(f"Found {len(contacts)} contacts for: {email}")
+        logger.debug(f"/d page: {username}, {email}, {role}, /{mode}")
     except Exception as e:
         logger.error(f"d/ Error: {e}")
         return redirect(url_for('main.index'))

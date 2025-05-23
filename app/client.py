@@ -53,7 +53,7 @@ class GraphClient:
             self.access_token = token_data.get("access_token")
             self.refresh_token_value = token_data.get("refresh_token", self.refresh_token_value)
             self.token_expires_at = time.time() + token_data.get("expires_in", 3600)
-            logger.debug("Access token refreshed")
+            
         except requests.RequestException as e:
             logger.error(f"Failed to refresh token: {e}")
             raise
@@ -65,9 +65,7 @@ class GraphClient:
         elif time.time() > self.token_expires_at:
             logger.debug("Token expired, refreshing...")
             self.refresh_token()
-        else:
-            logger.debug("Token is valid, no refresh needed")
-
+        
     def get_access_token(self, code):
         data = {
             "client_id": self.client_id,
@@ -83,7 +81,7 @@ class GraphClient:
             self.access_token = token_data.get("access_token")
             self.refresh_token_value = token_data.get("refresh_token")
             self.token_expires_at = time.time() + token_data.get("expires_in", 3600)
-            logger.debug("Access token obtained from code")
+            logger.debug("Access token obtained from authorization code")
             
         except requests.RequestException as e:
             logger.error(f"Failed to get access token: {e}")
@@ -97,5 +95,5 @@ class GraphClient:
         logger.debug("Token values loaded from session")
 
         if time.time() > self.token_expires_at:
-            logger.debug("Session token expired, attempting refresh...")
+            logger.debug("Token expired, refreshing")
             self.refresh_token()

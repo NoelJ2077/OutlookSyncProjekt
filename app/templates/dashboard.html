@@ -34,9 +34,9 @@
                             </div>
                             
                             <div class="contact-info">
-                                <div class="contact-field"><strong>Name:</strong> {{ contact.displayName }} <span style="float: right;">Contact Nr: {{ loop.index }}</span></div>
-                                <div class="contact-field"><strong>Email:</strong> {{ contact.primaryEmail }}<span style="float: right;"><a href="#" class="edit-contact" data-contact-id='{{ contact.id }}'>edit</a></span></div>
-                                <div class="contact-field"><strong>Company:</strong> {{ contact.companyName }}<span style="float: right;"><a href="#" class="delete-contact" data-contact-id='{{ contact.id }}'>delete</a></span></div>
+                                <div class="contact-field"><strong>Name:</strong> {{ contact.displayName }}<span class="c_btn info index" style="float: right;">Contact Nr: {{ loop.index }}</span></div>
+                                <div class="contact-field"><strong>Email:</strong> {{ contact.primaryEmail }}<span style="float: right;"><a class="c_btn edit" href="#edit_modal" data-contact-id='{{ contact.id }}'>edit</a></span></div>
+                                <div class="contact-field"><strong>Company:</strong> {{ contact.companyName }}<span style="float: right;"><a class="c_btn delete" href="#delete_modal" data-contact-id='{{ contact.id }}'>delete</a></span></div>
                                 <div class="contact-field">
                                     <div class="contact_elements">
                                         {% if contact.customPhoneList %}

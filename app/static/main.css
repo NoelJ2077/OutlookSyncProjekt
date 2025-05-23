@@ -170,6 +170,41 @@ body {
     color: #b0b0b0;
     font-style: italic;
 }
+.c_btn, a.c_btn {
+    padding: 0.1rem 0.6rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-radius: 4px;
+    background-color: #34495e;
+    color: #fff;
+    text-decoration: none;
+    border: none;
+    margin: 0 0.2em;
+    cursor: pointer;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+.c_btn.index {
+    background-color: #2ecc71;
+    color: #fff;
+}
+.c_btn.index:hover {
+    background-color: #27ae60;
+}
+a.c_btn.edit {
+    background-color: #64b5f6;
+    color: #121212;
+}
+a.c_btn.delete {
+    background-color: #e74c3c;
+    color: #fff;
+}
+a.c_btn.edit:hover {
+    background-color: #4593d9;
+}
+a.c_btn.delete:hover {
+    background-color: #c0392b;
+}
 
 /* Footer */
 #mainfooter {
@@ -377,4 +412,7 @@ input[type="submit"]:hover, input[type="button"]:hover, button:hover {
     border-radius: 4px;
     padding: 0.5rem;
     margin: 1rem 0;
+}
+.edit-contact {
+    /**/
 }
