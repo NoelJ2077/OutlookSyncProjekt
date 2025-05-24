@@ -85,17 +85,6 @@ class DB_Models:
                     FOREIGN KEY(folder_id) REFERENCES folders(id)
                 )''')
 
-
-        # TB contacts -> Outlook as Master DB
-        # Use case when we always load the contacts from Outlook
-        #c.execute('''CREATE TABLE IF NOT EXISTS contacts (
-        #            id TEXT PRIMARY KEY,
-        #            folder_id TEXT NOT NULL,
-        #            user_id INTEGER NOT NULL,
-        #            FOREIGN KEY(user_id) REFERENCES users(id)
-        #          )''')
-        
-        
         conn.commit() # save
         conn.close() # close connection
 
@@ -126,8 +115,8 @@ class Tests:
 class AppMode:
     """ App modes for header. (local database, ms-exchange, logged out)"""
     # app mode will be refreshed on every / route
-    localdb = "Connected to local database"
-    msgraph = "Connected to Microsoft Exchange"
-    nouser = "not logged in"
+    localdb = str("Connected to local database")
+    msgraph = str("Connected to Microsoft Exchange")
+    nouser = str("Not logged in")
         
 

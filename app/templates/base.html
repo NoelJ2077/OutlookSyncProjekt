@@ -27,6 +27,7 @@
                     <p>API-Status: <span class="app_mode {{ app_mode|lower|replace(' ', '_') }}">{{ app_mode }}</span></p>
                 </div>
                 <ul class="nav-links">
+                    <li><div class="nav-link">{% with messages = get_flashed_messages() %}{% if messages %}<div class="flash info">{% for message in messages %}<p>{{ message }}</p>{% endfor %}</div>{% endif %}{% endwith %}
                     <li><a class="nav-link" href="{{ url_for('main.dashboard') }}"><i class="fas fa-home"></i> Dashboard</a></li>
                     <li><a class="nav-link" href="{{ url_for('user.login') }}"><i class="fas fa-sign-in-alt"></i> Login</a></li>
                     <li><a class="nav-link" href="{{ url_for('user.register') }}"><i class="fas fa-user-plus"></i> Register</a></li>

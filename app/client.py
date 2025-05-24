@@ -1,13 +1,14 @@
 # app/client.py
 import requests, logging, time
 from app.config import ConfigVars
-from flask import session
+
 
 logger = logging.getLogger(__name__)
 
 class GraphClient:
     def __init__(self, access_token=None): # can be called with a token for example from a session
         self.token_url = f"https://login.microsoftonline.com/{ConfigVars.TENANT_ID}/oauth2/v2.0/token"
+        self.user_id = None
         self.client_id = ConfigVars.CLIENT_ID
         self.client_secret = ConfigVars.CLIENT_SECRET
         self.scope = "https://graph.microsoft.com/.default offline_access"  # `offline_access` für refresh_token
@@ -16,10 +17,6 @@ class GraphClient:
         self.access_token = access_token
         self.refresh_token_value = None
         self.token_expires_at = 0
-        logger.debug("GraphClient initialized")
-
-    def set_user_id(self, user_id):
-        self.user_id = user_id # email address
 
     def get_auth_url(self):
         """ Get OAuth2 Authorization URL """
@@ -71,18 +68,17 @@ class GraphClient:
         try:
             response = requests.post(self.token_url, data=data)
             response.raise_for_status()
-            token_data = response.json()
-            self.access_token = token_data.get("access_token")
-            self.refresh_token_value = token_data.get("refresh_token")
-            self.token_expires_at = time.time() + token_data.get("expires_in", 3600)
-            logger.debug("Access token obtained from authorization code")
+            token = response.json()
+            self.access_token = token.get("access_token")
+            self.refresh_token_value = token.get("refresh_token")
+            self.token_expires_at = time.time() + token.get("expires_in", 3600)
+            #logger.debug(f"Access token: {self.access_token[:10]} ...")
             
         except requests.RequestException as e:
             logger.error(f"Failed to get access token: {e}")
             raise
     
     def get_token_from_session(self, session_keys):
-        """ Load token from session, if expired, try to refresh else raise error """
         try:
             self.access_token = session_keys.get("access_token")
             self.refresh_token_value = session_keys.get("refresh_token")
@@ -98,13 +94,14 @@ class GraphClient:
             logger.error(f"Failed to load token from session: {e}")
             raise
 
-def get_client_from_session():
-    """ Get client from session """
-    try:
-        client = GraphClient()
-        client.get_token_from_session(session)
-        return client
-    except Exception as e:
-        logger.error(f"Failed to get client from session: {e}")
-        raise
+    def logout(self):
+        """ Logout from Account """
+        base_url = f"https://login.microsoftonline.com/{ConfigVars.TENANT_ID}/oauth2/v2.0/logout"
+        params = {
+            "post_logout_redirect_uri": ConfigVars.REDIRECT_URI
+        }
+        logout_url = f"{base_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
+        #logger.debug(f"Logout URL: {logout_url}")
+        return logout_url
+    
 

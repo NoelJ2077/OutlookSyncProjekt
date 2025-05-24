@@ -1,7 +1,7 @@
 #app/routes.py
 from app.helpermethods import * # Methods before client interacctions. (converte data etc.)
 from app.client_actions import get_contacts, create_contact, update_contact, get_contact, delete_contact
-from app.client import get_client_from_session
+from app.client import GraphClient
 import logging
 from functools import wraps
 from flask import Blueprint, render_template, redirect, url_for, request, session, flash
@@ -15,7 +15,7 @@ def login_required(f):
     """ Decorator to check if user is logged in via session """
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        logger.debug(f"Session: {session}")
+        #logger.debug(f"Session: {session}")
         if 'user_id' not in session:
             flash('You need to log in first', 'danger') # problem hier. login hat geklappt, aber session ist leer
             return redirect(url_for('user.login'))
@@ -35,7 +35,7 @@ def index():
         email = user_d['email']
         role = user_d['role']
     else:
-        # set all to Guest via lambda
+        # set all to None via lambda
         username, email, role = map(lambda x: None, range(3))
 
     mode = get_app_mode()
@@ -48,7 +48,7 @@ def index():
 @login_required
 def dashboard():
     """ Dashboard page """
-    logger.debug(f"/main.dasboard")
+    logger.debug(f"/main.dashboard")
 
     user_d = get_user_data(session['user_id'])
     username = user_d['username']
@@ -59,7 +59,8 @@ def dashboard():
     schema = load_schema()
     
     try:
-        client = get_client_from_session()
+        #logger.debug(f"Session: {session}")
+        client = GraphClient(session.get('access_token'))
         if not client:
             logger.error("Client not found in session")
             return redirect(url_for('user.login'))
@@ -67,7 +68,7 @@ def dashboard():
         contacts = [format_contact(c) for c in contacts_list]
 
     except Exception as e:
-        logger.error(f"d/ Error: {e}")
+        # error logging already done in methods.
         return redirect(url_for('main.index'))
     
     return render_template("dashboard.html", username=username, email=email, user_role=role, app_mode=mode, contacts=contacts, schema=schema)
@@ -99,21 +100,23 @@ def backup_contacts():
     logger.debug(f"/main.backup_contacts")
 
     try:
-        #client.get_token_from_session(session)
-        #client.ensure_valid_token()
-        contacts = get_contacts()
+        client = GraphClient(session.get('access_token'))
         
-        # make a backup of contacts locally. 
-        for con in contacts:
-            create_backup(con)
-        logger.info(f"{len(contacts)} contacts backed up")
-
+        contacts_list = get_contacts(client)
+        if not contacts_list:
+            flash('You have no contacts to backup.', 'info')
+            return redirect(url_for('main.dashboard'))
+        
+        # call method with list
+        backup_contacts_to_db(contacts_list, session['user_id'])
         flash('Contacts backed up successfully', 'success')
-        logger.debug(f"Contacts backed up successfully")
+        return redirect(url_for('main.dashboard'))
+    
     except Exception as e:
-        logger.error(f"Failed to backup contacts: {e}")
+        logger.error(f"Backup contacts failed: {e}")
         flash('Failed to backup contacts', 'danger')
-    return redirect(url_for('main.dashboard'))
+        return redirect(url_for('main.dashboard'))
+
 
 
 # --- User Routes ---
@@ -121,7 +124,11 @@ def backup_contacts():
 def login():
     """ Login page -> get_auth_url() -> redirect back to /callback """
     logger.debug(f"/user.login")
-    
+    if 'user_id' in session:
+        flash('You are already logged in', 'info')
+        logger.debug("User already logged in, redirecting to dashboard")
+        return redirect(url_for('main.dashboard'))
+
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -130,11 +137,12 @@ def login():
         session['user_id'] = user_id
         if user_id:
             logger.debug(f"DB Login successful: {email}")
-            client = GraphClient() # neu so?
-            client.set_user_id(user_id) # sets email, used as key for all requests
+            client = GraphClient()
+            client.user_id = user_id
             return redirect(client.get_auth_url())
         else:
             logger.debug(f"DB Login failed: {email}")
+            flash('Login failed, invalid email or password', 'danger')
             return redirect(url_for('main.index'))
         
     
@@ -149,14 +157,18 @@ def callback():
     code = request.args.get('code')
     user_id = request.args.get('state')
     if code and user_id:
-        #logger.debug(f"Callback with code: {code[:10]}")
-        client = GraphClient() # neu so?
+        client = GraphClient()
         client.user_id = user_id
-        session['user_id'] = user_id
         client.get_access_token(code)
-        
-        
+
+        # set session variables
+        session['user_id'] = user_id
+        session['access_token'] = client.access_token
+        session['refresh_token'] = client.refresh_token_value
+        session['token_expires_at'] = client.token_expires_at
+
         return redirect(url_for('main.dashboard'))
+
     else:
         return redirect(url_for('user.login'))
 
@@ -170,7 +182,6 @@ def register():
         email = request.form['email']
         password = request.form['password']
         
-        logger.debug(f"Register attempt: {email}")
         if check_register(username, email, password):
             flash('Registration successful', 'success')
             logger.debug(f"Registration successful: {email}")
@@ -185,10 +196,16 @@ def register():
 
 @user.route("/logout", methods=["GET"])
 def logout():
-    """ Logout user """
+    """ Logout user incl. from Microsoft account. """
     logger.debug(f"/user.logout")
 
-    session.clear() # clear all session data
+    try:
+        client = GraphClient(session.get('access_token'))
+        session.clear()
+        return redirect(client.logout())
+
+    except Exception as e:
+        logger.error(f"Logout failed: {e}")
+        flash('Logout failed', 'danger')
+        return redirect(url_for('main.index'))
     
-    flash('Logout successful', 'success')
-    return redirect(url_for('main.index'))

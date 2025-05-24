@@ -4,9 +4,10 @@ import sqlite3, logging, json, datetime
 from app.config import DB_Models, AppMode
 from app.ignore.hashing import check_domain, hash_password, verify_password
 from flask import session
-from app.client import GraphClient
 
 logger = logging.getLogger(__name__)
+
+get_app_mode = lambda: AppMode.msgraph if 'access_token' in session else AppMode.localdb if 'user_id' in session else AppMode.nouser
 
 def check_login(email, password):
     """ Check if the email exists in the database and if the password is correct. 
@@ -98,16 +99,6 @@ def get_user_data(email):
     except sqlite3.DatabaseError as e:
         logger.error(f"Error: {e}")
         return False
-
-def get_app_mode():
-    """Get current API Status."""
-
-    if 'access_token' in session:
-        return AppMode.msgraph
-    elif 'user_id' in session:
-        return AppMode.localdb
-    else:
-        return AppMode.nouser
 
 def format_address(prefix, c_address):
     if not c_address:
@@ -217,7 +208,42 @@ def load_schema():
         #logger.debug(f"Contact schema loaded with {len(schema)} fields.")
     return schema
 
-def create_backup(contacts):
-    """ Create a local backup of all contacts."""
-    pass
+def serialize_fields(fields):
+    """Convert dicts/lists to JSON strings, leave others as-is. Used to store other data types in TEXT fields."""
+    serialized = {}
+    for k, v in fields.items():
+        if isinstance(v, (list, dict)):
+            serialized[k] = json.dumps(v)
+        else:
+            serialized[k] = v
+    return serialized
+
+def backup_contacts_to_db(contacts_list, user_id):
+    """ Create a local backup of all Outlook contacts."""
+    try:
+        conn = sqlite3.connect(DB_Models.DB_PATH)
+        c = conn.cursor()
+        #logger.debug(f"first contact all data: {contacts_list[0] if contacts_list else 'No contacts to backup'}")
+        
+        for con in contacts_list:
+            # filter out metadata fields starting with '@'
+            c_fields = {k: v for k, v in con.items() if not k.startswith('@')}
+            # convert dicts/lists (metadata) fields to JSON strings for type TEXT
+            c_fields = serialize_fields(c_fields)
+
+            fields = ", ".join(c_fields.keys())
+            placeholders = ", ".join(["?"] * len(c_fields))
+            # udd user_id (email) 
+            query = f"INSERT OR REPLACE INTO contacts ({fields}, user_id) VALUES ({placeholders}, ?)"
+            values = list(c_fields.values()) + [user_id]
+            c.execute(query, values)
+
+        conn.commit()
+        conn.close()
+        return True
+
+    except sqlite3.DatabaseError as e:
+        logger.error(f"Error connecting to database: {e}")
+        return False
+
 

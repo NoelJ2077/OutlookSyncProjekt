@@ -1,12 +1,12 @@
 # app/client_actions.py
 import logging, requests
 from app.config import ConfigVars
-
+from app.client import GraphClient
 
 logger = logging.getLogger(__name__)
 
 # lambda method to check if client:
-hasClient = lambda c: c if c else get_client_from_session()
+hasClient = lambda c: c if c else GraphClient()
 
 def get_contacts(client):
     """ Get all contacts from the user. Needs to be called with a client instance. """
