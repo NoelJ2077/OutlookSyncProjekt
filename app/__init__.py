@@ -1,7 +1,7 @@
 # app/__init__.py
 from flask import Flask
 from .config import ConfigVars, DB_Models
-import logging, os
+import logging, os, socket
 
 logger = logging.getLogger(__name__)
 logger_initialized = False
@@ -32,6 +32,10 @@ def create_app():
         logger.handlers.clear()
         logger.addHandler(file_handler)
         logger.addHandler(console_handler)
+
+        # get local host IPv4 address
+        host_ipv4 = socket.gethostbyname(socket.gethostname())
+        logger.info(f"Local host IPv4 address: {host_ipv4}")
 
         logger_initialized = True # Logger is initialized
 

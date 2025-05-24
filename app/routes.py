@@ -124,6 +124,7 @@ def backup_contacts():
 def login():
     """ Login page -> get_auth_url() -> redirect back to /callback """
     logger.debug(f"/user.login")
+
     if 'user_id' in session:
         flash('You are already logged in', 'info')
         logger.debug("User already logged in, redirecting to dashboard")
@@ -134,8 +135,9 @@ def login():
         password = request.form['password']
         
         user_id = check_login(email, password)
-        session['user_id'] = user_id
+        
         if user_id:
+            session['user_id'] = user_id
             logger.debug(f"DB Login successful: {email}")
             client = GraphClient()
             client.user_id = user_id
@@ -176,6 +178,11 @@ def callback():
 def register():
     """ Register page """
     logger.debug(f"/user.register")
+
+    if 'user_id' in session:
+        flash('You are already logged in', 'info')
+        logger.debug("User already logged in, redirecting to dashboard")
+        return redirect(url_for('main.dashboard'))
 
     if request.method == 'POST':
         username = request.form['username']

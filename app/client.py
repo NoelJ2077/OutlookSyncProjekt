@@ -27,8 +27,7 @@ class GraphClient:
             "redirect_uri": self.redirect_uri,
             "response_mode": "query",
             "scope": self.scope,
-            "state": self.user_id,
-            
+            "state": self.user_id
         }
         auth_url = f"{base_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
         #logger.debug(f"Generated auth URL: {auth_url[:10]} ...")
@@ -77,23 +76,7 @@ class GraphClient:
         except requests.RequestException as e:
             logger.error(f"Failed to get access token: {e}")
             raise
-    
-    def get_token_from_session(self, session_keys):
-        try:
-            self.access_token = session_keys.get("access_token")
-            self.refresh_token_value = session_keys.get("refresh_token")
-            self.token_expires_at = float(session_keys.get("token_expires_at", 0))
-
-            logger.debug("Loaded from session: access=%s refresh=%s expires_at=%s",
-                        bool(self.access_token), bool(self.refresh_token_value), self.token_expires_at)
-
-            if time.time() > self.token_expires_at:
-                logger.debug("Token expired, trying refresh")
-                self.refresh_token()
-        except Exception as e:
-            logger.error(f"Failed to load token from session: {e}")
-            raise
-
+   
     def logout(self):
         """ Logout from Account """
         base_url = f"https://login.microsoftonline.com/{ConfigVars.TENANT_ID}/oauth2/v2.0/logout"
