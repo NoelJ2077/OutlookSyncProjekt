@@ -35,8 +35,12 @@
                             
                             <div class="contact-info">
                                 <div class="contact-field"><strong>Name:</strong> {{ contact.displayName }}<span class="c_btn info index" style="float: right;">Contact Nr: {{ loop.index }}</span></div>
-                                <div class="contact-field"><strong>Email:</strong> {{ contact.primaryEmail }}<span style="float: right;"><a class="c_btn edit" href="#edit_modal" data-contact-id='{{ contact.id }}'>edit</a></span></div>
-                                <div class="contact-field"><strong>Company:</strong> {{ contact.companyName }}<span style="float: right;"><a class="c_btn delete" href="#delete_modal" data-contact-id='{{ contact.id }}'>delete</a></span></div>
+                                <div class="contact-field"><strong>Email:</strong> {{ contact.primaryEmail }}<span style="float: right;">
+                                    <a href="#edit_contact" class="c_btn edit" data-contact-id='{{ contact.id }}' data-contact-name="{{ contact.displayName }}" onclick="openEditModal(this)">edit</a></span>
+                                </div>
+                                <div class="contact-field"><strong>Company:</strong> {{ contact.companyName }}<span style="float: right;">
+                                    <a href="#delete_contact" class="c_btn delete" data-contact-id="{{ contact.id }}" data-contact-name="{{ contact.displayName }}" onclick="openDeleteModal(this)">delete</a></span>
+                                </div>
                                 <div class="contact-field">
                                     <div class="contact_elements">
                                         {% if contact.customPhoneList %}
@@ -87,9 +91,9 @@
     </div>
 </div>
 <!-- dashboard.html -->
-<div id="editContactModal">
-    {% include 'modals/edit_contact_modal.html' %}
-</div>
+<!-- include modal templates for <actions> -->
+{% include "modals/delete_modal.html" %}
+{% include "modals/edit_modal.html" %}
 
 {% endblock %}
 

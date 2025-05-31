@@ -81,13 +81,23 @@ def contact(action):
     - using 1 main modal for all actions. 
     """
     logger.debug(f"/main.contact{action}")
+    client = GraphClient(session.get('access_token'))
 
     if action == "create":
         pass
     elif action == "update":
         pass
     elif action == "delete":
-        pass
+        # contact_id is passed with action.
+        contact_id = request.form.get("contact_id")
+        #logger.debug(f"ID: {contact_id}") # ok
+        resp_code = delete_contact(contact_id, client) # makes a new client
+        if resp_code == 204:
+            flash('Deleted 1 contact!', 'info')
+            return redirect(url_for('main.dashboard'))
+        else:
+            flash('Failed to delete 1 contact!', 'danger')
+            return redirect(url_for('main.index'))
     else:
         logger.error(f"Invalid action: {action}")
         flash('Invalid action', 'danger')

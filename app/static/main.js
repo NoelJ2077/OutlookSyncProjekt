@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-
+// Display contacts. 
 document.addEventListener('DOMContentLoaded', function() {
   const modal     = document.getElementById('editContactModal');
   const form      = document.getElementById('editContactForm');
@@ -68,34 +68,37 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 
-// delete a contact
-document.addEventListener("DOMContentLoaded", function () {
-  // Alle delete-Links auswählen
-  const deleteLinks = document.querySelectorAll(".delete-contact");
-  const modal = document.getElementById("deleteContactModal");
-  const contactIdInput = document.getElementById("contact_id_input");
-  const cancelButton = document.getElementById("cancelDelete");
+function openDeleteModal(el) {
+  var contactId = el.getAttribute("data-contact-id");
+  var contactName = el.getAttribute("data-contact-name");
 
-  // EventListener auf alle delete-Links setzen
-  deleteLinks.forEach(function (link) {
-    link.addEventListener("click", function (event) {
-      event.preventDefault(); // Link-Verhalten verhindern
-      const contactId = this.getAttribute("data-contact-id");
-      contactIdInput.value = contactId;
-      modal.style.display = "block";
-    });
-  });
+  document.getElementById("contactIdToDelete").value = contactId;
+  document.getElementById("contactNameToDelete").innerText = contactName;
 
-  // Modal schließen bei Klick auf "Abbrechen"
-  cancelButton.addEventListener("click", function () {
-    modal.style.display = "none";
-  });
+  $('#deleteContactModal').modal('show');
 
-  // Optional: Klick außerhalb des Modals schließt es
-  window.addEventListener("click", function (event) {
-    if (event.target === modal) {
-      modal.style.display = "none";
-    }
-  });
-});
+  window.location.hash = `delete_contact_${contactId}`;
+}
 
+function openEditModal(el) {
+  var contactId = el.getAttribute("data-contact-id");
+  var contactName = el.getAttribute("data-contact-name");
+
+  document.getElementById("contactIdToEdit").value = contactId;
+  document.getElementById("contactNameToEdit").innerText = contactName;
+
+  // bootstrap view
+  $('#editContactModal').modal('show');
+
+  // set id into url (optional)
+  window.location.hash = `edit_contact_${contactId}`;
+}
+
+
+// hide modals onclick
+function closeEditModal() {
+  $('#editContactModal').modal('hide');
+}
+function closeDeleteModal() {
+  $('#deleteContactModal').modal('hide');
+}

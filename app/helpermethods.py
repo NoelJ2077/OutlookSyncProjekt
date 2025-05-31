@@ -129,7 +129,7 @@ def format_date(date_str):
         date = datetime.datetime.strptime(date_str, "%Y-%m-%dT%H:%M:%SZ")
         return date.strftime("%d %B %Y")
     except ValueError:
-        logger.error("Invalid date format: %s", date_str)
+        logger.error(f"Invalid date format: {date_str}")
         return None
 
 def format_contact(contact):
@@ -198,7 +198,7 @@ def format_contact(contact):
         return contact
 
     except Exception as e:
-        logger.error("Fehler beim Formatieren eines Kontakts: %s", e)
+        logger.error(f"Fehler beim Formatieren eines Kontakts: {e}")
         return contact
 
 def load_schema():

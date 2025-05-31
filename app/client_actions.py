@@ -13,7 +13,7 @@ def get_contacts(client):
 
     client = hasClient(client)
 
-    headers = {"Authorization": "Bearer %s" % client.access_token}
+    headers = {"Authorization": f"Bearer {client.access_token}"}
     
     try:
         response = requests.get(ConfigVars.URL_ME, headers=headers)
@@ -21,7 +21,7 @@ def get_contacts(client):
         logger.debug(f"Received: {len(response.json().get('value', []))} contacts")
         return response.json().get("value", [])
     except requests.RequestException as e:
-        logger.error("Failed to get contacts: %s" % e)
+        logger.error(f"Failed to get contacts: {e}")
         raise
 
 def get_contact(contact_id, client):
@@ -29,14 +29,14 @@ def get_contact(contact_id, client):
 
     client = hasClient(client)
     
-    headers = {"Authorization": "Bearer %s" % client.access_token}
+    headers = {"Authorization": f"Bearer {client.access_token}"}
     try:
         response = requests.get(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers)
         response.raise_for_status()
         logger.debug(f"Received contact: {contact_id[:10]}")
         return response.json()
     except requests.RequestException as e:
-        logger.error("Failed to get contact: %s" % e)
+        logger.error(f"Failed to get contact: {e}")
         raise
 
 def create_contact(contact, client):
@@ -45,7 +45,7 @@ def create_contact(contact, client):
     client = hasClient(client)
     
     headers = {
-        "Authorization": "Bearer %s" % client.access_token,
+        "Authorization": f"Bearer {client.access_token}",
         "Content-Type": "application/json"
     }
     try:
@@ -53,12 +53,12 @@ def create_contact(contact, client):
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        logger.error("Failed to create contact: %s" % e)
+        logger.error(f"Failed to create contact: {e}")
         raise
 
 def update_contact(contact_id):
     """ Edit an existing contact """
-    logger.debug("Editing contact: %s" % contact_id)
+    logger.debug(f"Editing contact: {contact_id}")
     pass
 
 def delete_contact(contact_id, client):
@@ -66,12 +66,14 @@ def delete_contact(contact_id, client):
     
     client = hasClient(client)
 
-    headers = {"Authorization": "Bearer %s" % client.access_token}
+    headers = {"Authorization": f"Bearer {client.access_token}"}
+    #logger.debug(f"token: {client.access_token[:25]}")
     try:
         response = requests.delete(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers)
         response.raise_for_status()
-        return response.json()
+        logger.info(f"Deleted contact with: {response.status_code}, ok.")
+        return response.status_code
     except requests.RequestException as e:
-        logger.error("Failed to delete contact: %s" % e)
+        logger.error(f"Failed to delete contact: {e}")
         raise
 
