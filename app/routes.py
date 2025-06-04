@@ -4,7 +4,7 @@ from app.client_actions import get_contacts, create_contact, update_contact, get
 from app.client import GraphClient
 import logging
 from functools import wraps
-from flask import Blueprint, render_template, redirect, url_for, request, session, flash
+from flask import Blueprint, render_template, redirect, url_for, request, session, flash, jsonify
 
 main = Blueprint('main', __name__)
 user = Blueprint('user', __name__)
@@ -86,12 +86,23 @@ def contact(action):
     if action == "create":
         pass
     elif action == "update":
-        pass
+        
+        contact_id = request.form.get("contact_id")
+        fields = get_con_fields()# todo: alle request.form.get da rein
+
+        resp_code = update_contact(contact_id, client)
+        if resp_code == 204:
+            flash('Updated 1 contact!', 'info')
+            return redirect(url_for('main.dashboard'))
+        else:
+            flash('Failed to update 1 contact!', 'danger')
+            return redirect(url_for('main.index'))
+        
     elif action == "delete":
         # contact_id is passed with action.
         contact_id = request.form.get("contact_id")
         #logger.debug(f"ID: {contact_id}") # ok
-        resp_code = delete_contact(contact_id, client) # makes a new client
+        resp_code = delete_contact(contact_id, client)
         if resp_code == 204:
             flash('Deleted 1 contact!', 'info')
             return redirect(url_for('main.dashboard'))
@@ -127,7 +138,15 @@ def backup_contacts():
         flash('Failed to backup contacts', 'danger')
         return redirect(url_for('main.dashboard'))
 
+# --- JavaScript Routes --- 
+@main.route("/get_contact/<contact_id>")
+def get_contact_js(contact_id):
+    
+    client = GraphClient(session.get('access_token'))
 
+    contact = get_contact(contact_id, client)
+
+    return contact
 
 # --- User Routes ---
 @user.route("/login", methods=["GET", "POST"])

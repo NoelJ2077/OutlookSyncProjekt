@@ -16,7 +16,7 @@
 
 /* === dialog container === */
 .modal-dialog {
-    max-width: 700px;
+    max-width: 80%;
     margin: 10% auto;
     background-color: #1e1e2f;
     color: #f0f0f0;

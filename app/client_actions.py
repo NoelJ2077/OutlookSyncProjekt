@@ -1,5 +1,5 @@
 # app/client_actions.py
-import logging, requests
+import logging, requests, json
 from app.config import ConfigVars
 from app.client import GraphClient
 
@@ -49,6 +49,7 @@ def create_contact(contact, client):
         "Content-Type": "application/json"
     }
     try:
+        #url = f"https://graph.microsoft.com/v1.0/me/contacts/{contact_id}"
         response = requests.post(ConfigVars.URL_ME, headers=headers, json=contact)
         response.raise_for_status()
         return response.json()
@@ -56,10 +57,23 @@ def create_contact(contact, client):
         logger.error(f"Failed to create contact: {e}")
         raise
 
-def update_contact(contact_id):
-    """ Edit an existing contact """
-    logger.debug(f"Editing contact: {contact_id}")
-    pass
+def update_contact(contact_id, fields):
+    """ Edit an existing contact by id, convert to json object and .patch """
+    
+    client = hasClient(client)
+
+    headers = {"Authorization": f"Bearer {client.access_token}"}
+
+    data = json.dumps(fields) # should make a 
+
+    try:
+        response = requests.patch(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers, data=data)
+        response.raise_for_status()
+        logger.info(f"Updated contact with status: {response.status_code}")
+        return response.status_code
+    except requests.RequestException as e:
+        logger.error(f"Failed to update contact: {e}")
+        raise    
 
 def delete_contact(contact_id, client):
     """ Delete 1 or selected contact(s). """
@@ -71,7 +85,7 @@ def delete_contact(contact_id, client):
     try:
         response = requests.delete(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers)
         response.raise_for_status()
-        logger.info(f"Deleted contact with: {response.status_code}, ok.")
+        logger.info(f"Deleted contact with status: {response.status_code}")
         return response.status_code
     except requests.RequestException as e:
         logger.error(f"Failed to delete contact: {e}")

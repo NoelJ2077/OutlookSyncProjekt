@@ -1,21 +1,23 @@
 <!-- edit_modal.html -->
 <div class="modal fade" id="editContactModal" tabindex="-1" role="dialog" aria-labelledby="editContactModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
-    <form method="POST" action="{{ url_for('main.contact', action='edit') }}">
+  <div class="modal-dialog modal-lg" role="document">
+    <form method="POST" action="{{ url_for('main.contact', action='update') }}" id="editContactForm">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editContactModalLabel">Edit Contact in Tenant (Outlook)</h5>
+          <h5 class="modal-title">Edit Contact: <strong id="contactNameToEdit"></strong></h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeEditModal()">
             <span aria-hidden="true">&times;</span>
           </button>
         </div>
-        <div class="modal-body">
-          <p>Edit contact: <strong id="contactNameToEdit"></strong></p>
-          <input type="hidden" name="contact_id" id="contactIdToEdit">
+        
+        <input id="contactIdToEdit" type="hidden"><!-- Safe from deletion (DOM) -->
+        <div class="modal-body" id="dynamicFormFields">
+          <!-- Fields displayed via JS (var's emptied from DOM when onclick(X|cancel))! -->
         </div>
+
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" onclick="closeEditModal()">Cancel</button>
-          <button type="submit" class="btn btn-danger">Edit</button>
+          <button type="submit" class="btn btn-primary">Update</button>
         </div>
       </div>
     </form>

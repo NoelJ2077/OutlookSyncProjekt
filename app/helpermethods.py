@@ -101,6 +101,7 @@ def get_user_data(email):
         return False
 
 def format_address(prefix, c_address):
+    """ A custom adress format for the website. """
     if not c_address:
         return None
 
@@ -202,7 +203,11 @@ def format_contact(contact):
         return contact
 
 def load_schema():
-    """ Gets contact schema from JSON file, returns a dict. """
+    """ Gets contact schema from JSON file, returns a dict. 
+    - "assistantName": "string",
+    - "businessAddress": {"@odata.type": "microsoft.graph.physicalAddress"},
+    - "etc..."
+    """
     with open("app/static/ressource.json", "r") as f:
         schema = json.load(f)
         #logger.debug(f"Contact schema loaded with {len(schema)} fields.")
@@ -246,4 +251,7 @@ def backup_contacts_to_db(contacts_list, user_id):
         logger.error(f"Error connecting to database: {e}")
         return False
 
-
+def get_con_fields():
+    """ return all fields from edit/create contact forms. """
+    schema = load_schema()
+    
