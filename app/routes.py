@@ -205,14 +205,17 @@ def callback():
         local_mail = user_d['email']
 
         if not local_mail or ms_email.lower() != local_mail:
-    
             logger.warning(f"Email mismatch: local={local_mail}, ms={ms_email}")
-            flash("Microsoft Login email does not match your local login email!", "danger")
             session.clear()
-            return redirect(url_for('main.index'))
+            logout_url = client.logout()
 
+            # Render mismatch page with auto-redirect
+            return render_template("modals/nonmodal_err.html",
+                                   ms_email=ms_email,
+                                   local_email=local_mail,
+                                   logout_url=logout_url)
 
-        # set session variables
+        # success
         session['user_id'] = user_id
         session['access_token'] = client.access_token
         session['refresh_token'] = client.refresh_token_value

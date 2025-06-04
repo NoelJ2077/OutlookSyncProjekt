@@ -1,0 +1,16 @@
+{% extends 'base.html' %}
+
+{% block title %}Login mismatch!{% endblock %}
+
+{% block content %}
+<head>
+    <meta http-equiv="refresh" content="5;url={{ url_for('user.logout') }}">
+</head>
+<div class="container-fluid">
+        <h2>Login mismatch</h2>
+        <p>Die Microsoft E-Mail (<strong>{{ ms_email }}</strong>) stimmt nicht mit deinem lokalen Benutzerkonto (<strong>{{ local_email }}</strong>) überein.</p>
+        <p>Du wirst in 5 Sekunden automatisch ausgeloggt...</p>
+        <p><a href="{{ url_for('user.logout') }}">Hier klicken, falls nichts passiert.</a></p>
+</div>
+
+{% endblock %}

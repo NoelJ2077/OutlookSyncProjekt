@@ -27,7 +27,8 @@ class GraphClient:
             "redirect_uri": self.redirect_uri,
             "response_mode": "query",
             "scope": self.scope,
-            "state": self.user_id
+            "state": self.user_id,
+            "prompt": "select_account" # show logged in accounts
         }
         auth_url = f"{base_url}?{'&'.join(f'{k}={v}' for k, v in params.items())}"
         #logger.debug(f"Generated auth URL: {auth_url[:10]} ...")
