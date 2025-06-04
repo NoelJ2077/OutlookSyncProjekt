@@ -77,6 +77,25 @@ class GraphClient:
             logger.error(f"Failed to get access token: {e}")
             raise
    
+    def get_me(self):
+        """Fetch user profile from Microsoft Graph API (/me endpoint)."""
+        if not self.access_token:
+            raise ValueError("No access token available for /me request")
+        
+        headers = {
+            "Authorization": f"Bearer {self.access_token}"
+        }
+        try:
+            response = requests.get(ConfigVars.URL_ME, headers=headers)
+            response.raise_for_status()
+            logger.debug("Got User profile after login.")
+            return response.json()
+        except requests.RequestException as e:
+            logger.error(f"Failed to fetch /me: {e}")
+            raise
+
+
+
     def logout(self):
         """ Logout from Account """
         base_url = f"https://login.microsoftonline.com/{ConfigVars.TENANT_ID}/oauth2/v2.0/logout"

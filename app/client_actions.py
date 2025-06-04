@@ -16,7 +16,7 @@ def get_contacts(client):
     headers = {"Authorization": f"Bearer {client.access_token}"}
     
     try:
-        response = requests.get(ConfigVars.URL_ME, headers=headers)
+        response = requests.get(ConfigVars.URL_CONTACTS, headers=headers)
         response.raise_for_status()
         logger.debug(f"Received: {len(response.json().get('value', []))} contacts")
         return response.json().get("value", [])
@@ -31,7 +31,7 @@ def get_contact(contact_id, client):
     
     headers = {"Authorization": f"Bearer {client.access_token}"}
     try:
-        response = requests.get(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers)
+        response = requests.get(f"{ConfigVars.URL_CONTACTS}/{contact_id}", headers=headers)
         response.raise_for_status()
         logger.debug(f"Received contact: {contact_id[:10]}")
         return response.json()
@@ -50,7 +50,7 @@ def create_contact(contact, client):
     }
     try:
         #url = f"https://graph.microsoft.com/v1.0/me/contacts/{contact_id}"
-        response = requests.post(ConfigVars.URL_ME, headers=headers, json=contact)
+        response = requests.post(ConfigVars.URL_CONTACTS, headers=headers, json=contact)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
@@ -67,7 +67,7 @@ def update_contact(contact_id, fields):
     data = json.dumps(fields) # should make a 
 
     try:
-        response = requests.patch(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers, data=data)
+        response = requests.patch(f"{ConfigVars.URL_CONTACTS}/{contact_id}", headers=headers, data=data)
         response.raise_for_status()
         logger.info(f"Updated contact with status: {response.status_code}")
         return response.status_code
@@ -83,7 +83,7 @@ def delete_contact(contact_id, client):
     headers = {"Authorization": f"Bearer {client.access_token}"}
     #logger.debug(f"token: {client.access_token[:25]}")
     try:
-        response = requests.delete(f"{ConfigVars.URL_ME}/{contact_id}", headers=headers)
+        response = requests.delete(f"{ConfigVars.URL_CONTACTS}/{contact_id}", headers=headers)
         response.raise_for_status()
         logger.info(f"Deleted contact with status: {response.status_code}")
         return response.status_code

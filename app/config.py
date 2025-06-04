@@ -13,6 +13,7 @@ class ConfigVars:
     REDIRECT_URI = os.getenv("REDIRECT_URI")
     LOG_PATH = os.path.join(os.path.dirname(__file__), 'ignore', 'app.log')
     URL_ME = os.getenv("URL_me") # /me
+    URL_CONTACTS = os.getenv("URL_CONTACTS") # me/contacts
 
 
 class DB_Models:

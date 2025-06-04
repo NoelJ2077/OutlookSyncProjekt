@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Display contacts. 
+// Display contacts on load dashboard.
 document.addEventListener('DOMContentLoaded', function() {
   const modal     = document.getElementById('editContactModal');
   const form      = document.getElementById('editContactForm');
@@ -60,17 +60,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // Abbrechen
-  cancelBtn.addEventListener('click', () => modal.style.display = 'none');
-  modal.addEventListener('click', e => {
-    if (e.target === modal) modal.style.display = 'none';
-  });
 });
 
 function openDeleteModal(el) {
   var contactId = el.getAttribute("data-contact-id");
   var contactName = el.getAttribute("data-contact-name");
-  console.log("Edit click:", contactId, contactName); // ok
+  console.log("delete con_id onclick modal open:", contactName, contactId); // ok
 
   document.getElementById("contactIdToDelete").value = contactId;
   document.getElementById("contactNameToDelete").innerText = contactName;
@@ -83,9 +78,11 @@ function openDeleteModal(el) {
 async function openEditModal(el) {
   const contactId = el.getAttribute("data-contact-id");
   const contactName = el.getAttribute("data-contact-name");
-  document.getElementById("contactIdToEdit").value = contactId;
-  document.getElementById("contactNameToEdit").innerText = contactName;
+  console.log("edit con_id onclick modal open:", contactName, contactId); // ok
 
+  document.getElementById("contactIdToEdit").value = contactId;
+  document.getElementById("contactNameToEdit").innerText = contactName; // None???
+  console.log(contactName)
   // get field, scheme
   const schema = await fetch("/static/ressource.json").then(r => r.json());
   
@@ -97,7 +94,8 @@ async function openEditModal(el) {
   $('#editContactModal').modal('hide'); // Stattdessen verdecken (weil Bootstrap)
 
   // Felder, die wir ignorieren wollen
-  const excludeFields = ["categories", "changekey", "createdDateTime", "fileAS", "parentFolderID"];
+  const excludeFields = ["categories", "parentFolderId", "changeKey", "createdDateTime", "fileAs", "id", "lastModifiedDateTime", "photo", "yomiCompanyName", "yomiGivenName", "yomiSurname", "imAddresses"];
+
 
   // Clear container und setze auf Grid (2 Spalten)
   formContainer.innerHTML = "";  // Leeren nicht erlaubt, sonst error bei wieder öffnen da DOM = None
@@ -112,15 +110,10 @@ async function openEditModal(el) {
     let value = contactData[field] || "";
     if (Array.isArray(value)) {
       value = value.join(", ");
-    } else if (typeof value === 'object' && value !== null) {
-      // extra format for fields like addressfields
-      if (["businessAddress", "homeAddress", "otherAddress"].includes(field)) {
-        const { street = "", postalCode = "", city = "", countryOrRegion = "" } = value;
-        value = `${street},  ${postalCode},  ${city},  ${countryOrRegion}`;
-      } else {
-        value = JSON.stringify(value);
-      }
+    } else if (typeof value === "object" && value !== null) {
+      value = JSON.stringify(value);
     }
+    // else leave as is (string, number, etc.)
 
     // Wrapper für ein Feld
     const fieldWrapper = document.createElement("div");
@@ -136,12 +129,36 @@ async function openEditModal(el) {
     label.style.fontWeight = "500";
     label.style.color = "#fff";
 
-    // Input mit Unterstrich-Optik
-    const input = document.createElement("input");
+    // input field (formatted for adressfields with more rows)
+    let input;
+
+    if (["businessAddress", "homeAddress", "otherAddress"].includes(field)) {
+      // Formatierte Adresse
+      const { street = "", postalCode = "", city = "", countryOrRegion = "" } = contactData[field] || {};
+      value = `${street}\n${postalCode} ${city}\n${countryOrRegion}`;
+
+      input = document.createElement("textarea");
+      input.rows = 4; // 4 rows
+      input.style.resize = "vertical";
+    } else {
+      input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = value;
+    }
+
     input.name = field;
     input.id = field;
-    input.type = "text";
-    input.placeholder = value;
+    input.value = value;
+    input.style.border = "none";
+    input.style.borderBottom = "1px solid #ccc";
+    input.style.padding = "4px 6px";
+    input.style.fontSize = "15px";
+    input.style.outline = "none";
+    input.style.background = "transparent";
+    input.style.width = "100%";
+
+
+    // std values for all fields 
     input.style.border = "none";
     input.style.borderBottom = "1px solid #ccc";
     input.style.padding = "4px 6px";

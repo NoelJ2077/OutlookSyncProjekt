@@ -188,9 +188,29 @@ def callback():
     code = request.args.get('code')
     user_id = request.args.get('state')
     if code and user_id:
+
+        # create client
         client = GraphClient()
         client.user_id = user_id
         client.get_access_token(code)
+
+        # check both logins!
+        ms_user = client.get_me()
+        ms_email = ms_user.get("userPrincipalName") or ms_user.get("mail")
+        if not ms_email:
+            flash("Unable to get Email from Microsoft Graph!", "danger")
+            return redirect(url_for('main.index'))
+        # Check logins 
+        user_d = get_user_data(user_id) # Problem, wurde bereits im callback überschrieben glaube ich!!!
+        local_mail = user_d['email']
+
+        if not local_mail or ms_email.lower() != local_mail:
+    
+            logger.warning(f"Email mismatch: local={local_mail}, ms={ms_email}")
+            flash("Microsoft Login email does not match your local login email!", "danger")
+            session.clear()
+            return redirect(url_for('main.index'))
+
 
         # set session variables
         session['user_id'] = user_id
