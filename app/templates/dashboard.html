@@ -20,7 +20,10 @@
 
         <!-- Hauptbereich für Kontakte -->
         <div class="col-md-9 content">
-            <h3>Contacts</h3>
+            <div class="conctacts_header">
+                <h3>Contacts</h3>
+                <a href="#create_contact" class="c_btn create" onclick="openCreateModal(this)">create new contact</a>
+            </div>
             <div id="contact-list">
                 {% if contacts %}
                     {% for contact in contacts %}
@@ -94,6 +97,7 @@
 <!-- include modal templates for <actions> -->
 {% include "modals/delete_modal.html" %}
 {% include "modals/edit_modal.html" %}
+{% include "modals/create_modal.html" %}
 
 {% endblock %}
 

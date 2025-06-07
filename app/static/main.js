@@ -62,41 +62,97 @@ document.addEventListener('DOMContentLoaded', function() {
 
 });
 
-function openDeleteModal(el) {
-  var contactId = el.getAttribute("data-contact-id");
-  var contactName = el.getAttribute("data-contact-name");
-  console.log("delete con_id onclick modal open:", contactName, contactId); // ok
+// excluding fields. 
+const excludeFields = ["categories", "parentFolderId", "changeKey", "createdDateTime", "fileAs", "id", "lastModifiedDateTime", "photo", "yomiCompanyName", "yomiGivenName", "yomiSurname", "imAddresses"];
 
-  document.getElementById("contactIdToDelete").value = contactId;
-  document.getElementById("contactNameToDelete").innerText = contactName;
+async function openCreateModal(el) {
+  const schema = await fetch("/static/ressource.json").then(r => r.json());
+  const formContainer = document.getElementById("dynamicFormFieldsC");
+  console.log("Create a new contact");
+  $('#createContactModal').modal('hide');
 
-  $('#deleteContactModal').modal('show');
+  formContainer.innerHTML = "";
+  formContainer.style.display = "grid";
+  formContainer.style.gridTemplateColumns = "1fr 1fr 1fr"; // 3 col's
+  formContainer.style.gap = "12px 16px"; // vertical, horizontal
+  formContainer.style.padding = "4px";
 
-  window.location.hash = `delete_contact_${contactId}`;
+  for (const [field, type] of Object.entries(schema)) {
+    if (excludeFields.includes(field)) continue;
+
+    let value = "";
+
+    // complex data types have different handling. 
+    if (field === "emailAddresses") {
+      value = "default email@demo.com"; // TODO: split email into 3 different fields
+    } else if (["businessPhones", "homePhones", "children", "categories", "imAddresses"].includes(field)) {
+      value = "";
+    } else if (["businessAddress", "homeAddress", "otherAddress"].includes(field)) {
+      value = "street 123\n8000 Zürich\nCH";
+    } else {
+      value = "";
+    }
+
+    // Wrapper für das Feld
+    const fieldWrapper = document.createElement("div");
+    fieldWrapper.style.display = "flex";
+    fieldWrapper.style.flexDirection = "column";
+
+    const label = document.createElement("label");
+    label.setAttribute("for", field);
+    label.innerText = field;
+    label.style.fontSize = "13px";
+    label.style.marginBottom = "4px";
+    label.style.fontWeight = "500";
+    label.style.color = "#fff";
+
+    let input;
+    if (["businessAddress", "homeAddress", "otherAddress", "emailAddresses"].includes(field)) {
+      input = document.createElement("textarea");
+      input.rows = (field === "emailAddresses") ? 4 : 4;
+      input.style.resize = "vertical";
+    } else {
+      input = document.createElement("input");
+      input.type = "text";
+      input.placeholder = "";
+    }
+
+    input.name = field;
+    input.id = field;
+    input.value = value;
+    input.style.border = "none";
+    input.style.borderBottom = "1px solid #ccc";
+    input.style.padding = "4px 6px";
+    input.style.fontSize = "14px";
+    input.style.outline = "none";
+    input.style.background = "transparent";
+    input.style.width = "100%";
+
+    fieldWrapper.appendChild(label);
+    fieldWrapper.appendChild(input);
+    formContainer.appendChild(fieldWrapper);
+  }
+
+  $('#createContactModal').modal('show');
 }
 
 async function openEditModal(el) {
   const contactId = el.getAttribute("data-contact-id");
   const contactName = el.getAttribute("data-contact-name");
-  console.log("edit con_id onclick modal open:", contactName, contactId); // ok
 
   document.getElementById("contactIdToEdit").value = contactId;
   document.getElementById("contactNameToEdit").innerText = contactName; // None???
-  console.log(contactName)
+  console.log("edit contact: ", contactName)
   // get field, scheme
   const schema = await fetch("/static/ressource.json").then(r => r.json());
   
   // Lade Kontaktwerte vom Server
   const contactData = await fetch(`/get_contact/${contactId}`).then(r => r.json());
-  // err: http://localhost:5000/get_contact/contact_id(id) abbrevieated for display
 
-  const formContainer = document.getElementById("dynamicFormFields");
+  const formContainer = document.getElementById("dynamicFormFieldsE");
   $('#editContactModal').modal('hide'); // Stattdessen verdecken (weil Bootstrap)
 
-  // Felder, die wir ignorieren wollen
-  const excludeFields = ["categories", "parentFolderId", "changeKey", "createdDateTime", "fileAs", "id", "lastModifiedDateTime", "photo", "yomiCompanyName", "yomiGivenName", "yomiSurname", "imAddresses"];
-
-
+  
   // Clear container und setze auf Grid (2 Spalten)
   formContainer.innerHTML = "";  // Leeren nicht erlaubt, sonst error bei wieder öffnen da DOM = None
   formContainer.style.display = "grid";
@@ -107,20 +163,35 @@ async function openEditModal(el) {
   for (const [field, type] of Object.entries(schema)) {
     if (excludeFields.includes(field)) continue;
 
-    let value = contactData[field] || "";
-    if (Array.isArray(value)) {
-      value = value.join(", ");
-    } else if (typeof value === "object" && value !== null) {
-      value = JSON.stringify(value);
-    }
-    // else leave as is (string, number, etc.)
+    let rawValue = contactData[field];
+    let value = "";
 
-    // Wrapper für ein Feld
+    if (field === "emailAddresses" && Array.isArray(rawValue)) {
+      value = rawValue
+        .map(e => {
+          const type = (e.name && e.name !== e.address) ? e.name : "default";
+          return `${type}: ${e.address || ""}`;
+        })
+        .join("\n");
+    }
+    else if (["businessPhones", "homePhones", "children", "categories", "imAddresses"].includes(field)) {
+    value = Array.isArray(rawValue) ? rawValue.join(", ") : "";
+    } else if (["businessAddress", "homeAddress", "otherAddress"].includes(field)) {
+      const { street = "", postalCode = "", city = "", countryOrRegion = "" } = rawValue || {};
+      value = `${street}\n${postalCode} ${city}\n${countryOrRegion}`;
+    } else if (["birthday", "createdDateTime", "lastModifiedDateTime"].includes(field)) {
+      value = rawValue ? new Date(rawValue).toLocaleString() : "";
+    } else if (typeof rawValue === "object" && rawValue !== null) {
+      value = JSON.stringify(rawValue);
+    } else {
+      value = rawValue || "";
+    }
+
+    // Wrapper für das Feld
     const fieldWrapper = document.createElement("div");
     fieldWrapper.style.display = "flex";
     fieldWrapper.style.flexDirection = "column";
 
-    // Label
     const label = document.createElement("label");
     label.setAttribute("for", field);
     label.innerText = field;
@@ -129,17 +200,14 @@ async function openEditModal(el) {
     label.style.fontWeight = "500";
     label.style.color = "#fff";
 
-    // input field (formatted for adressfields with more rows)
     let input;
-
-    if (["businessAddress", "homeAddress", "otherAddress"].includes(field)) {
-      // Formatierte Adresse
-      const { street = "", postalCode = "", city = "", countryOrRegion = "" } = contactData[field] || {};
-      value = `${street}\n${postalCode} ${city}\n${countryOrRegion}`;
-
+    if (["businessAddress", "homeAddress", "otherAddress", "emailAddresses"].includes(field)) {
       input = document.createElement("textarea");
-      input.rows = 4; // 4 rows
+      input.rows = 4;
       input.style.resize = "vertical";
+    } else if (field === "emailAddresses") { 
+        input = document.createElement("textarea");
+        input.rows = 3;
     } else {
       input = document.createElement("input");
       input.type = "text";
@@ -152,36 +220,36 @@ async function openEditModal(el) {
     input.style.border = "none";
     input.style.borderBottom = "1px solid #ccc";
     input.style.padding = "4px 6px";
-    input.style.fontSize = "15px";
-    input.style.outline = "none";
-    input.style.background = "transparent";
-    input.style.width = "100%";
-
-
-    // std values for all fields 
-    input.style.border = "none";
-    input.style.borderBottom = "1px solid #ccc";
-    input.style.padding = "4px 6px";
     input.style.fontSize = "14px";
     input.style.outline = "none";
     input.style.background = "transparent";
-    // make size 80px
     input.style.width = "100%";
 
-    // Zusammenbauen
     fieldWrapper.appendChild(label);
     fieldWrapper.appendChild(input);
     formContainer.appendChild(fieldWrapper);
   }
 
-
-
-
   $('#editContactModal').modal('show');
 }
 
+function openDeleteModal(el) {
+  var contactId = el.getAttribute("data-contact-id");
+  var contactName = el.getAttribute("data-contact-name");
 
-// hide modals onclick
+  document.getElementById("contactIdToDelete").value = contactId;
+  document.getElementById("contactNameToDelete").innerText = contactName;
+  console.log("delete contact: ", contactName)
+
+  $('#deleteContactModal').modal('show');
+
+  window.location.hash = `delete_contact_${contactId}`;
+}
+
+// hide modals
+function closeCreateModal() {
+  $('#CreateContactModal').modal('hide');
+}
 function closeEditModal() {
   $('#editContactModal').modal('hide');
 }

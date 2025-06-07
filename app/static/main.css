@@ -70,9 +70,16 @@ body {
     color: #64b5f6;
 }
 
+.conctacts_header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 5px;
+}
+
 /* Main Content */
 #maincontent {
-    max-width: 1200px;
+    max-width: 90%;
     margin: 2rem auto;
     padding: 0 1rem;
     min-height: calc(100vh - 200px);

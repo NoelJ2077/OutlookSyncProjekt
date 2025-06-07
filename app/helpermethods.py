@@ -3,7 +3,7 @@
 import sqlite3, logging, json, datetime
 from app.config import DB_Models, AppMode
 from app.ignore.hashing import check_domain, hash_password, verify_password
-from flask import session
+from flask import session, request
 
 logger = logging.getLogger(__name__)
 
@@ -252,6 +252,64 @@ def backup_contacts_to_db(contacts_list, user_id):
         return False
 
 def get_con_fields():
-    """ return all fields from edit/create contact forms. """
+    """Extracts fields from request.form and convert types based on schema.
+    - Usage in /patch & .post (update / create) contact.
+    """
     schema = load_schema()
+    data = {}
+    cleaned = {}
+    
+    for field, field_type in schema.items():
+        raw_value = request.form.get(field)
+
+        # Skip if not present (user didn't edit this field)
+        if raw_value is None or raw_value.strip() == "":
+            continue
+
+        raw_value = raw_value.replace("\r", "") # Umlaute support
+
+        # Handle physical addresses
+        if isinstance(field_type, dict) and field_type.get("@odata.type") == "microsoft.graph.physicalAddress":
+            # Split into lines (you defined it as: street \n postalCode city \n country)
+            lines = raw_value.strip().split("\n")
+            address = {
+                "street": lines[0] if len(lines) > 0 else "",
+                "postalCode": "",
+                "city": "",
+                "countryOrRegion": lines[2] if len(lines) > 2 else "",
+            }
+            if len(lines) > 1:
+                parts = lines[1].split(" ", 1)
+                address["postalCode"] = parts[0]
+                if len(parts) > 1:
+                    address["city"] = parts[1]
+            data[field] = address
+
+        elif field == "emailAddresses":
+            data[field] = [{"address": x.strip()} for x in raw_value.split(",") if x.strip()]
+
+        elif isinstance(field_type, list):
+            data[field] = [x.strip() for x in raw_value.split(",") if x.strip()]
+
+        # Handle emailAddresses
+        elif isinstance(field_type, list) and field_type[0].get("@odata.type") == "microsoft.graph.emailAddress":
+            data[field] = [{"address": x.strip()} for x in raw_value.split(",") if x.strip()]
+
+        else:
+            data[field] = raw_value.strip()
+
+    
+    # clean empty fields
+    for k, v in data.items():
+        if v in ("", [], {}, None):  # leere Werte entfernen
+            continue
+        if isinstance(v, list) and all(item == "" for item in v):
+            continue
+        if isinstance(v, dict) and all(val == "" for val in v.values()):
+            continue
+        cleaned[k] = v
+
+    return cleaned
+
+
     

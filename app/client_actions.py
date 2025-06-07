@@ -30,6 +30,7 @@ def get_contact(contact_id, client):
     client = hasClient(client)
     
     headers = {"Authorization": f"Bearer {client.access_token}"}
+
     try:
         response = requests.get(f"{ConfigVars.URL_CONTACTS}/{contact_id}", headers=headers)
         response.raise_for_status()
@@ -45,29 +46,27 @@ def create_contact(contact, client):
     client = hasClient(client)
     
     headers = {
-        "Authorization": f"Bearer {client.access_token}",
-        "Content-Type": "application/json"
+        "Authorization": f"Bearer {client.access_token}"
     }
+    
     try:
         #url = f"https://graph.microsoft.com/v1.0/me/contacts/{contact_id}"
         response = requests.post(ConfigVars.URL_CONTACTS, headers=headers, json=contact)
         response.raise_for_status()
-        return response.json()
+        logger.info(f"Created contact with status: {response.status_code}")
+        return response.status_code
     except requests.RequestException as e:
         logger.error(f"Failed to create contact: {e}")
         raise
 
-def update_contact(contact_id, fields):
-    """ Edit an existing contact by id, convert to json object and .patch """
+def update_contact(contact_id, fields, client):
+    """ Edit an existing contact by id."""
     
     client = hasClient(client)
-
+    
     headers = {"Authorization": f"Bearer {client.access_token}"}
-
-    data = json.dumps(fields) # should make a 
-
     try:
-        response = requests.patch(f"{ConfigVars.URL_CONTACTS}/{contact_id}", headers=headers, data=data)
+        response = requests.patch(f"{ConfigVars.URL_CONTACTS}/{contact_id}", headers=headers, json=fields)
         response.raise_for_status()
         logger.info(f"Updated contact with status: {response.status_code}")
         return response.status_code
@@ -76,12 +75,12 @@ def update_contact(contact_id, fields):
         raise    
 
 def delete_contact(contact_id, client):
-    """ Delete 1 or selected contact(s). """
+    """ Delete selected contact. """
     
     client = hasClient(client)
 
     headers = {"Authorization": f"Bearer {client.access_token}"}
-    #logger.debug(f"token: {client.access_token[:25]}")
+    
     try:
         response = requests.delete(f"{ConfigVars.URL_CONTACTS}/{contact_id}", headers=headers)
         response.raise_for_status()

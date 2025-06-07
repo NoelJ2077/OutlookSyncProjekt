@@ -1,0 +1,24 @@
+<!-- create_modal.html -->
+<div class="modal fade" id="createContactModal" tabindex="-1" role="dialog" aria-labelledby="createContactModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <form method="POST" action="{{ url_for('main.contact', action='create') }}">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Create a new contact in Tenant (Outlook)</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeCreateModal()">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        
+        <div class="modal-body" id="dynamicFormFieldsC">
+          <!-- Fields displayed via JS (var's emptied from DOM when onclick(X|cancel))! -->
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" onclick="closeCreateModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary">Create contact</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
