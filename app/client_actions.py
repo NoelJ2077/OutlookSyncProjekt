@@ -9,17 +9,22 @@ logger = logging.getLogger(__name__)
 hasClient = lambda c: c if c else GraphClient()
 
 def get_contacts(client):
-    """ Get all contacts from the user. Needs to be called with a client instance. """
-
     client = hasClient(client)
 
     headers = {"Authorization": f"Bearer {client.access_token}"}
-    
+    contacts = []
+
+    url = ConfigVars.URL_CONTACTS
+
     try:
-        response = requests.get(ConfigVars.URL_CONTACTS, headers=headers)
-        response.raise_for_status()
-        logger.debug(f"Received: {len(response.json().get('value', []))} contacts")
-        return response.json().get("value", [])
+        while url:
+            response = requests.get(url, headers=headers)
+            response.raise_for_status()
+            data = response.json()
+            contacts.extend(data.get('value', []))
+            url = data.get('@odata.nextLink')  # Falls weitere Seiten vorhanden
+        logger.debug(f"Received total: {len(contacts)} contacts")
+        return contacts
     except requests.RequestException as e:
         logger.error(f"Failed to get contacts: {e}")
         raise

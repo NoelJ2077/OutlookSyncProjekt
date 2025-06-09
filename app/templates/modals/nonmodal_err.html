@@ -4,13 +4,13 @@
 
 {% block content %}
 <head>
-    <meta http-equiv="refresh" content="5;url={{ url_for('user.logout') }}">
+    <meta http-equiv="refresh" content="5;url={{ url_for('user.login') }}">
 </head>
 <div class="container-fluid">
         <h2>Login mismatch</h2>
-        <p>Die Microsoft E-Mail (<strong>{{ ms_email }}</strong>) stimmt nicht mit deinem lokalen Benutzerkonto (<strong>{{ local_email }}</strong>) überein.</p>
-        <p>Du wirst in 5 Sekunden automatisch ausgeloggt...</p>
-        <p><a href="{{ url_for('user.logout') }}">Hier klicken, falls nichts passiert.</a></p>
+        <p>Your Microsoft E-mail (<strong>{{ ms_email }}</strong>) does not match your mail used for local login (<strong>{{ local_email }}</strong>).</p>
+        <p>Redirecting in 5 seconds to login page...</p>
+        <p><a href="{{ url_for('user.login') }}">Click here, if redirect is not working!</a></p>
 </div>
 
 {% endblock %}

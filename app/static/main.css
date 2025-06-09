@@ -79,7 +79,7 @@ body {
 
 /* Main Content */
 #maincontent {
-    max-width: 90%;
+    max-width: 95%;
     margin: 2rem auto;
     padding: 0 1rem;
     min-height: calc(100vh - 200px);

@@ -228,24 +228,43 @@ def backup_contacts_to_db(contacts_list, user_id):
     try:
         conn = sqlite3.connect(DB_Models.DB_PATH)
         c = conn.cursor()
-        #logger.debug(f"first contact all data: {contacts_list[0] if contacts_list else 'No contacts to backup'}")
-        
+
+        # Alle Spalten der Tabelle contacts auslesen
+        c.execute("PRAGMA table_info(contacts)")
+        db_columns = [row[1] for row in c.fetchall()]  # Spaltennamen extrahieren
+
         for con in contacts_list:
-            # filter out metadata fields starting with '@'
-            c_fields = {k: v for k, v in con.items() if not k.startswith('@')}
-            # convert dicts/lists (metadata) fields to JSON strings for type TEXT
+            # debug fields:
+            print(con)
+
+            # filter out metadata fields starting with '@' und nur Felder, die in DB-Spalten sind
+            c_fields = {k: v for k, v in con.items() if not k.startswith('@') and k in db_columns}
+
+            # dicts/lists zu JSON-Strings konvertieren
             c_fields = serialize_fields(c_fields)
 
             fields = ", ".join(c_fields.keys())
             placeholders = ", ".join(["?"] * len(c_fields))
-            # udd user_id (email) 
-            query = f"INSERT OR REPLACE INTO contacts ({fields}, user_id) VALUES ({placeholders}, ?)"
-            values = list(c_fields.values()) + [user_id]
+
+            # user_id hinzufügen, falls user_id auch eine Spalte in DB ist
+            if 'user_id' in db_columns:
+                fields += ", user_id"
+                placeholders += ", ?"
+                values = list(c_fields.values()) + [user_id]
+            else:
+                values = list(c_fields.values())
+
+            query = f"INSERT OR REPLACE INTO contacts ({fields}) VALUES ({placeholders})"
             c.execute(query, values)
 
         conn.commit()
         conn.close()
         return True
+
+    except Exception as e:
+        logger.error(f"Failed to backup contacts: {e}")
+        return False
+
 
     except sqlite3.DatabaseError as e:
         logger.error(f"Error connecting to database: {e}")
